@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recipe</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <a href="./my.html">Мои рецепты</a>
+  </header>
+
+  <main class="card">
+    <h1 id="title">...</h1>
+    <p id="meta" class="muted"></p>
+
+    <div class="row">
+      <button id="saveBtn">Сохранить</button>
+      <button id="shareBtn">Поделиться</button>
+    </div>
+
+    <h2>Ингредиенты</h2>
+    <ul id="ingredients"></ul>
+
+    <h2>Шаги</h2>
+    <ol id="steps"></ol>
+
+    <p id="toast" class="toast hidden"></p>
+  </main>
+
+  <script type="module" src="./recipe.js"></script>
+</body>
+</html>
