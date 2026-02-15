@@ -1,5 +1,5 @@
 import { RECIPES } from "../data/recipes.js";
-import { getSavedIds } from "./lib.js";
+import { getSavedIds, removeId } from "./lib.js";
 
 const ids = getSavedIds();
 const list = document.getElementById("list");
@@ -17,6 +17,17 @@ if (!ids.length) {
     a.href = `./recipe.html?id=${encodeURIComponent(id)}`;
     a.textContent = r.title;
     li.appendChild(a);
+
+    const btn = document.createElement("button");
+    btn.textContent = "Удалить";
+    btn.style.marginLeft = "8px";
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      removeId(id);
+      location.reload();
+    });
+    li.appendChild(btn);
+
     list.appendChild(li);
   });
 }
