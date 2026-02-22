@@ -86,7 +86,20 @@
       background: #f5f5f5; border-radius: 10px;
     }
     .sent-item-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .sent-item-recipient { font-size: 12px; color: #007aff; margin-bottom: 4px; }
     .sent-item-preview { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .recipient-toggle {
+      display: flex; gap: 0; margin-bottom: 12px;
+      background: #f0f0f5; border-radius: 10px; padding: 3px;
+    }
+    .recipient-btn {
+      flex: 1; padding: 8px 0; font-size: 14px; font-weight: 600;
+      background: none; color: #666; border: none; border-radius: 8px;
+      cursor: pointer;
+    }
+    .recipient-btn:hover { background: none; color: #333; }
+    .recipient-btn.active { background: #fff; color: #007aff; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
 
     .empty { color: #999; font-style: italic; margin-top: 60px; text-align: center; font-size: 15px; }
 
@@ -129,7 +142,12 @@
           <input type="text" id="title" placeholder="Например: Борщ бабушкин">
           <label for="body">Рецепт</label>
           <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
-          <button id="send">Отправить сыну</button>
+          <label>Кому</label>
+          <div class="recipient-toggle">
+            <button class="recipient-btn active" data-recipient="son">Сыну</button>
+            <button class="recipient-btn" data-recipient="daughter">Дочке</button>
+          </div>
+          <button id="send">Отправить</button>
           <div class="status" id="status"></div>
         </div>
         <div class="tab-content" id="tab-sent">
@@ -141,13 +159,20 @@
     <div class="phone-label">Передатчик</div>
   </div>
 
-  <!-- Сын -->
+  <!-- Получатель -->
   <div>
     <div class="phone phone-son">
       <div class="phone-notch"></div>
       <div class="phone-screen">
-        <h1>Сын</h1>
-        <div id="son-content">
+        <h1 id="receiver-title">Сын</h1>
+        <div class="tabs" id="receiver-tabs">
+          <button class="tab active" data-receiver="son">Сын</button>
+          <button class="tab" data-receiver="daughter">Дочка</button>
+        </div>
+        <div id="receiver-content-son">
+          <p class="empty">Пока ничего</p>
+        </div>
+        <div id="receiver-content-daughter" style="display:none">
           <p class="empty">Пока ничего</p>
         </div>
       </div>
@@ -160,18 +185,41 @@
     const bodyInput = document.getElementById('body');
     const sendBtn = document.getElementById('send');
     const status = document.getElementById('status');
-    const sonContent = document.getElementById('son-content');
     const sentList = document.getElementById('sent-list');
     const sentEmpty = document.getElementById('sent-empty');
 
-    // Табы мамы
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
+    // Табы мамы (Новый рецепт / Отправленные)
+    document.querySelectorAll('.phone-mom .tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.phone-mom .tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.phone-mom .tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Выбор получателя у мамы
+    let selectedRecipient = 'son';
+    const recipientLabels = { son: 'сыну', daughter: 'дочке' };
+    const recipientNames = { son: 'Сын', daughter: 'Дочка' };
+
+    document.querySelectorAll('.recipient-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.recipient-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedRecipient = btn.dataset.recipient;
+      });
+    });
+
+    // Табы получателя (Сын / Дочка)
+    document.querySelectorAll('#receiver-tabs .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('#receiver-tabs .tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const r = tab.dataset.receiver;
+        document.getElementById('receiver-content-son').style.display = r === 'son' ? '' : 'none';
+        document.getElementById('receiver-content-daughter').style.display = r === 'daughter' ? '' : 'none';
+        document.getElementById('receiver-title').textContent = recipientNames[r];
       });
     });
 
@@ -236,21 +284,24 @@
 
       if (!body) return;
 
+      const recipient = selectedRecipient;
+
       // Сохранить в отправленные
-      sentRecipes.push({ title: title || 'Без названия', body });
+      sentRecipes.push({ title: title || 'Без названия', body, recipient });
       sentEmpty.style.display = 'none';
       const li = document.createElement('li');
       li.className = 'sent-item';
-      li.innerHTML = `<div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
+      li.innerHTML = `<div class="sent-item-recipient">${esc(recipientNames[recipient])}</div><div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
       sentList.prepend(li);
 
       // Показать статус у мамы
-      status.textContent = 'Отправлено!';
+      status.textContent = `Отправлено ${recipientLabels[recipient]}!`;
 
-      // Показать у сына
+      // Показать у получателя
       const heading = title ? `<h2 style="margin-bottom:16px">${esc(title)}</h2>` : '';
+      const contentEl = document.getElementById('receiver-content-' + recipient);
 
-      sonContent.innerHTML = `
+      contentEl.innerHTML = `
         ${heading}
         <div class="original-label">Оригинал от мамы</div>
         <div class="original">${esc(body)}</div>
