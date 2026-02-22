@@ -20,3 +20,4 @@
 - 2026-02-22 — Переход от чистого discovery к прототипированию: создан split-screen прототип "Мама → Сын" (`src/index.html`), подтверждающий концепцию из `product_brief.md` (два режима, оригинал + адаптация).
 - 2026-02-22 — Прототип деплоится на GitHub Pages: https://shevnin.github.io/familyrecipes/src/index.html
 - 2026-02-22 — Структура docs — плоская (без вложенных `00_start_here/`, `01_product/`, `planning/` и т.д.).
+- 2026-02-22 — Для восстановления контекста между сессиями введен обязательный handoff-файл `docs/current_state.md` и протокол чтения/обновления в `docs/workflow.md`.
