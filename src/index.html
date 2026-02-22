@@ -6,71 +6,120 @@
   <title>Семейные рецепты</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex; justify-content: center; align-items: center; gap: 32px;
+      background: #e8e8ed;
+    }
 
-    .panel { flex: 1; padding: 32px; display: flex; flex-direction: column; }
-    .panel-mom { background: #fafafa; border-right: 2px solid #e0e0e0; }
-    .panel-son { background: #fff; }
+    .phone {
+      width: 375px; height: 812px;
+      border-radius: 40px;
+      background: #fff;
+      box-shadow: 0 8px 40px rgba(0,0,0,.18), inset 0 0 0 3px #d1d1d6;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
 
-    h1 { font-size: 24px; margin-bottom: 24px; }
+    .phone-notch {
+      width: 150px; height: 28px;
+      background: #000; border-radius: 0 0 18px 18px;
+      margin: 0 auto;
+      position: relative; z-index: 1;
+    }
 
-    label { display: block; font-weight: 500; margin-bottom: 6px; }
+    .phone-screen {
+      flex: 1; padding: 16px 20px 24px;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .phone-mom .phone-screen { background: #fafafa; }
+    .phone-son .phone-screen { background: #fff; }
+
+    .phone-label {
+      text-align: center; font-size: 13px; font-weight: 600;
+      color: #666; margin-top: 12px; letter-spacing: 0.5px;
+    }
+
+    h1 { font-size: 20px; margin-bottom: 16px; }
+
+    label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; }
     input[type="text"] {
-      width: 100%; padding: 10px 12px; font-size: 16px;
-      border: 1px solid #ccc; border-radius: 6px; margin-bottom: 16px;
+      width: 100%; padding: 10px 12px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 10px; margin-bottom: 12px;
     }
     textarea {
-      width: 100%; flex: 1; padding: 12px; font-size: 16px;
-      border: 1px solid #ccc; border-radius: 6px; resize: none;
-      margin-bottom: 16px; min-height: 200px;
+      width: 100%; flex: 1; padding: 12px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 10px; resize: none;
+      margin-bottom: 12px; min-height: 160px;
     }
     button {
-      padding: 12px 24px; font-size: 16px; font-weight: 600;
-      background: #4a90d9; color: #fff; border: none; border-radius: 6px;
-      cursor: pointer; align-self: flex-start;
+      padding: 12px 24px; font-size: 15px; font-weight: 600;
+      background: #007aff; color: #fff; border: none; border-radius: 12px;
+      cursor: pointer; align-self: stretch; text-align: center;
     }
-    button:hover { background: #3a7bc8; }
+    button:hover { background: #0066d6; }
 
-    .status { margin-top: 12px; color: #2e7d32; font-weight: 500; }
+    .status { margin-top: 10px; color: #2e7d32; font-weight: 500; font-size: 14px; text-align: center; }
 
-    .empty { color: #999; font-style: italic; margin-top: 40px; text-align: center; }
+    .empty { color: #999; font-style: italic; margin-top: 60px; text-align: center; font-size: 15px; }
 
     .original {
-      background: #f5f0e8; border-left: 4px solid #c9a96e;
-      padding: 16px; border-radius: 6px; white-space: pre-wrap;
-      font-size: 15px; line-height: 1.5; margin-bottom: 24px;
+      background: #f5f0e8; border-left: 3px solid #c9a96e;
+      padding: 12px; border-radius: 8px; white-space: pre-wrap;
+      font-size: 14px; line-height: 1.5; margin-bottom: 16px;
     }
     .original-label, .structured-label {
-      font-weight: 600; font-size: 14px; text-transform: uppercase;
-      letter-spacing: 0.5px; color: #888; margin-bottom: 8px;
+      font-weight: 600; font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #888; margin-bottom: 6px;
     }
 
-    .structured { font-size: 15px; line-height: 1.6; }
-    .structured h3 { font-size: 16px; margin: 16px 0 8px; }
+    .structured { font-size: 14px; line-height: 1.5; }
+    .structured h3 { font-size: 15px; margin: 12px 0 6px; }
     .structured h3:first-child { margin-top: 0; }
-    .structured ul, .structured ol { padding-left: 20px; }
-    .structured li { margin-bottom: 4px; }
+    .structured ul, .structured ol { padding-left: 18px; }
+    .structured li { margin-bottom: 3px; }
+
+    @media (max-width: 840px) {
+      body { flex-direction: column; height: auto; padding: 16px; gap: 16px; }
+      .phone { width: 100%; max-width: 375px; height: 700px; }
+    }
   </style>
 </head>
 <body>
 
   <!-- Мама -->
-  <div class="panel panel-mom">
-    <h1>Мама</h1>
-    <label for="title">Название рецепта</label>
-    <input type="text" id="title" placeholder="Например: Борщ бабушкин">
-    <label for="body">Рецепт</label>
-    <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
-    <button id="send">Отправить сыну</button>
-    <div class="status" id="status"></div>
+  <div>
+    <div class="phone phone-mom">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <h1>Мама</h1>
+        <label for="title">Название рецепта</label>
+        <input type="text" id="title" placeholder="Например: Борщ бабушкин">
+        <label for="body">Рецепт</label>
+        <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
+        <button id="send">Отправить сыну</button>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+    <div class="phone-label">Передатчик</div>
   </div>
 
   <!-- Сын -->
-  <div class="panel panel-son">
-    <h1>Сын</h1>
-    <div id="son-content">
-      <p class="empty">Пока ничего</p>
+  <div>
+    <div class="phone phone-son">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <h1>Сын</h1>
+        <div id="son-content">
+          <p class="empty">Пока ничего</p>
+        </div>
+      </div>
     </div>
+    <div class="phone-label">Мастер</div>
   </div>
 
   <script>
