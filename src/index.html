@@ -177,6 +177,13 @@
 
     const sentRecipes = [];
 
+    // Экранирование HTML
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
     // Парсинг маминого текста в структурированную версию
     function parseRecipe(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -203,7 +210,7 @@
       if (ingredients.length > 0) {
         html += '<h3>Ингредиенты</h3><ul>';
         for (const ing of ingredients) {
-          html += `<li>${ing}</li>`;
+          html += `<li>${esc(ing)}</li>`;
         }
         html += '</ul>';
       }
@@ -211,7 +218,7 @@
       if (steps.length > 0) {
         html += '<h3>Шаги</h3><ol>';
         for (const step of steps) {
-          html += `<li>${step}</li>`;
+          html += `<li>${esc(step)}</li>`;
         }
         html += '</ol>';
       }
@@ -234,19 +241,19 @@
       sentEmpty.style.display = 'none';
       const li = document.createElement('li');
       li.className = 'sent-item';
-      li.innerHTML = `<div class="sent-item-title">${title || 'Без названия'}</div><div class="sent-item-preview">${body}</div>`;
+      li.innerHTML = `<div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
       sentList.prepend(li);
 
       // Показать статус у мамы
       status.textContent = 'Отправлено!';
 
       // Показать у сына
-      const heading = title ? `<h2 style="margin-bottom:16px">${title}</h2>` : '';
+      const heading = title ? `<h2 style="margin-bottom:16px">${esc(title)}</h2>` : '';
 
       sonContent.innerHTML = `
         ${heading}
         <div class="original-label">Оригинал от мамы</div>
-        <div class="original">${body}</div>
+        <div class="original">${esc(body)}</div>
         <div class="structured-label">Структурированная версия</div>
         <div class="structured">${parseRecipe(body)}</div>
       `;
