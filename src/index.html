@@ -177,31 +177,51 @@
 
     const sentRecipes = [];
 
-    // Мок структурированной версии
-    const MOCK_STRUCTURED = `
-      <h3>Ингредиенты</h3>
-      <ul>
-        <li>Свёкла — 1 шт.</li>
-        <li>Картошка — 3 шт.</li>
-        <li>Капуста — 300 г</li>
-        <li>Морковь — 1 шт.</li>
-        <li>Лук — 1 шт.</li>
-        <li>Томатная паста — 1 ст. л.</li>
-        <li>Мясо (говядина) — 400 г</li>
-        <li>Вода — 2 л</li>
-        <li>Соль, перец — по вкусу</li>
-      </ul>
-      <h3>Шаги</h3>
-      <ol>
-        <li>Сварить бульон из мяса (~1.5 часа), мясо вытащить.</li>
-        <li>Свёклу натереть на крупной тёрке, обжарить с томатной пастой.</li>
-        <li>Картошку нарезать кубиками, капусту нашинковать.</li>
-        <li>В бульон добавить картошку, варить 10 минут.</li>
-        <li>Добавить капусту и свёклу, варить ещё 10 минут.</li>
-        <li>Лук и морковь обжарить, добавить в борщ.</li>
-        <li>Посолить, поперчить. Дать настояться 20 минут.</li>
-      </ol>
-    `;
+    // Парсинг маминого текста в структурированную версию
+    function parseRecipe(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return '<p style="color:#999">Пусто — нечего разбирать</p>';
+
+      // Паттерн для ингредиентов: строка содержит число + единицу измерения
+      const unitPattern = /\d+\s*(г|гр|кг|мл|л|шт|ст\.?\s*л|ч\.?\s*л|стакан|щепот|пучок|зубч|долек|долька|банк|пачк|упаковк)/i;
+      // Или строка с "по вкусу", "на глаз"
+      const tastePattern = /по вкусу|на глаз/i;
+
+      const ingredients = [];
+      const steps = [];
+
+      for (const line of lines) {
+        if (unitPattern.test(line) || tastePattern.test(line)) {
+          ingredients.push(line);
+        } else {
+          steps.push(line);
+        }
+      }
+
+      let html = '';
+
+      if (ingredients.length > 0) {
+        html += '<h3>Ингредиенты</h3><ul>';
+        for (const ing of ingredients) {
+          html += `<li>${ing}</li>`;
+        }
+        html += '</ul>';
+      }
+
+      if (steps.length > 0) {
+        html += '<h3>Шаги</h3><ol>';
+        for (const step of steps) {
+          html += `<li>${step}</li>`;
+        }
+        html += '</ol>';
+      }
+
+      if (!html) {
+        html = '<p style="color:#999">Не удалось разобрать — попробуй написать ингредиенты с количествами</p>';
+      }
+
+      return html;
+    }
 
     sendBtn.addEventListener('click', () => {
       const title = titleInput.value.trim();
@@ -228,7 +248,7 @@
         <div class="original-label">Оригинал от мамы</div>
         <div class="original">${body}</div>
         <div class="structured-label">Структурированная версия</div>
-        <div class="structured">${MOCK_STRUCTURED}</div>
+        <div class="structured">${parseRecipe(body)}</div>
       `;
     });
   </script>
