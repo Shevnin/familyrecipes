@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Семейные рецепты</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; }
+
+    .panel { flex: 1; padding: 32px; display: flex; flex-direction: column; }
+    .panel-mom { background: #fafafa; border-right: 2px solid #e0e0e0; }
+    .panel-son { background: #fff; }
+
+    h1 { font-size: 24px; margin-bottom: 24px; }
+
+    label { display: block; font-weight: 500; margin-bottom: 6px; }
+    input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 6px; margin-bottom: 16px;
+    }
+    textarea {
+      width: 100%; flex: 1; padding: 12px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 6px; resize: none;
+      margin-bottom: 16px; min-height: 200px;
+    }
+    button {
+      padding: 12px 24px; font-size: 16px; font-weight: 600;
+      background: #4a90d9; color: #fff; border: none; border-radius: 6px;
+      cursor: pointer; align-self: flex-start;
+    }
+    button:hover { background: #3a7bc8; }
+
+    .status { margin-top: 12px; color: #2e7d32; font-weight: 500; }
+
+    .empty { color: #999; font-style: italic; margin-top: 40px; text-align: center; }
+
+    .original {
+      background: #f5f0e8; border-left: 4px solid #c9a96e;
+      padding: 16px; border-radius: 6px; white-space: pre-wrap;
+      font-size: 15px; line-height: 1.5; margin-bottom: 24px;
+    }
+    .original-label, .structured-label {
+      font-weight: 600; font-size: 14px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #888; margin-bottom: 8px;
+    }
+
+    .structured { font-size: 15px; line-height: 1.6; }
+    .structured h3 { font-size: 16px; margin: 16px 0 8px; }
+    .structured h3:first-child { margin-top: 0; }
+    .structured ul, .structured ol { padding-left: 20px; }
+    .structured li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <!-- Мама -->
+  <div class="panel panel-mom">
+    <h1>Мама</h1>
+    <label for="title">Название рецепта</label>
+    <input type="text" id="title" placeholder="Например: Борщ бабушкин">
+    <label for="body">Рецепт</label>
+    <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
+    <button id="send">Отправить сыну</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Сын -->
+  <div class="panel panel-son">
+    <h1>Сын</h1>
+    <div id="son-content">
+      <p class="empty">Пока ничего</p>
+    </div>
+  </div>
+
+  <script>
+    const titleInput = document.getElementById('title');
+    const bodyInput = document.getElementById('body');
+    const sendBtn = document.getElementById('send');
+    const status = document.getElementById('status');
+    const sonContent = document.getElementById('son-content');
+
+    // Мок структурированной версии
+    const MOCK_STRUCTURED = `
+      <h3>Ингредиенты</h3>
+      <ul>
+        <li>Свёкла — 1 шт.</li>
+        <li>Картошка — 3 шт.</li>
+        <li>Капуста — 300 г</li>
+        <li>Морковь — 1 шт.</li>
+        <li>Лук — 1 шт.</li>
+        <li>Томатная паста — 1 ст. л.</li>
+        <li>Мясо (говядина) — 400 г</li>
+        <li>Вода — 2 л</li>
+        <li>Соль, перец — по вкусу</li>
+      </ul>
+      <h3>Шаги</h3>
+      <ol>
+        <li>Сварить бульон из мяса (~1.5 часа), мясо вытащить.</li>
+        <li>Свёклу натереть на крупной тёрке, обжарить с томатной пастой.</li>
+        <li>Картошку нарезать кубиками, капусту нашинковать.</li>
+        <li>В бульон добавить картошку, варить 10 минут.</li>
+        <li>Добавить капусту и свёклу, варить ещё 10 минут.</li>
+        <li>Лук и морковь обжарить, добавить в борщ.</li>
+        <li>Посолить, поперчить. Дать настояться 20 минут.</li>
+      </ol>
+    `;
+
+    sendBtn.addEventListener('click', () => {
+      const title = titleInput.value.trim();
+      const body = bodyInput.value.trim();
+
+      if (!body) return;
+
+      // Показать статус у мамы
+      status.textContent = 'Отправлено!';
+
+      // Показать у сына
+      const heading = title ? `<h2 style="margin-bottom:16px">${title}</h2>` : '';
+
+      sonContent.innerHTML = `
+        ${heading}
+        <div class="original-label">Оригинал от мамы</div>
+        <div class="original">${body}</div>
+        <div class="structured-label">Структурированная версия</div>
+        <div class="structured">${MOCK_STRUCTURED}</div>
+      `;
+    });
+  </script>
+
+</body>
+</html>
