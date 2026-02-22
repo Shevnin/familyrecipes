@@ -103,6 +103,38 @@
 
     .empty { color: #999; font-style: italic; margin-top: 60px; text-align: center; font-size: 15px; }
 
+    .filter-bar {
+      display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .filter-chip {
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      border: none; border-radius: 16px; cursor: pointer;
+      background: #f0f0f5; color: #666;
+    }
+    .filter-chip:hover { opacity: 0.8; }
+    .filter-chip.active { color: #fff; }
+
+    .recipe-card {
+      padding: 10px 12px; margin-bottom: 8px;
+      border-radius: 10px; background: #f9f9f9;
+      cursor: pointer; border-left: 4px solid transparent;
+      transition: background 0.15s;
+    }
+    .recipe-card:hover { background: #f0f0f5; }
+    .recipe-card-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .recipe-card-sender {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 10px; color: #fff; margin-bottom: 4px;
+    }
+    .recipe-card-preview { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .detail-back {
+      padding: 6px 0; font-size: 14px; font-weight: 500;
+      background: none; color: #007aff; border: none; cursor: pointer;
+      text-align: left; align-self: flex-start; margin-bottom: 8px; border-radius: 0;
+    }
+    .detail-back:hover { background: none; text-decoration: underline; }
+
     .original {
       background: #f5f0e8; border-left: 3px solid #c9a96e;
       padding: 12px; border-radius: 8px; white-space: pre-wrap;
@@ -164,17 +196,10 @@
     <div class="phone phone-son">
       <div class="phone-notch"></div>
       <div class="phone-screen">
-        <h1 id="receiver-title">Сын</h1>
-        <div class="tabs" id="receiver-tabs">
-          <button class="tab active" data-receiver="son">Сын</button>
-          <button class="tab" data-receiver="daughter">Дочка</button>
-        </div>
-        <div id="receiver-content-son">
-          <p class="empty">Пока ничего</p>
-        </div>
-        <div id="receiver-content-daughter" style="display:none">
-          <p class="empty">Пока ничего</p>
-        </div>
+        <h1>Рецепты от семьи</h1>
+        <div class="filter-bar" id="filter-bar"></div>
+        <div id="recipe-list"></div>
+        <div id="recipe-detail" style="display:none"></div>
       </div>
     </div>
     <div class="phone-label">Мастер</div>
@@ -187,6 +212,9 @@
     const status = document.getElementById('status');
     const sentList = document.getElementById('sent-list');
     const sentEmpty = document.getElementById('sent-empty');
+    const recipeListEl = document.getElementById('recipe-list');
+    const recipeDetailEl = document.getElementById('recipe-detail');
+    const filterBar = document.getElementById('filter-bar');
 
     // Табы мамы (Новый рецепт / Отправленные)
     document.querySelectorAll('.phone-mom .tab').forEach(tab => {
@@ -201,7 +229,6 @@
     // Выбор получателя у мамы
     let selectedRecipient = 'son';
     const recipientLabels = { son: 'сыну', daughter: 'дочке' };
-    const recipientNames = { son: 'Сын', daughter: 'Дочка' };
 
     document.querySelectorAll('.recipient-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -210,20 +237,6 @@
         selectedRecipient = btn.dataset.recipient;
       });
     });
-
-    // Табы получателя (Сын / Дочка)
-    document.querySelectorAll('#receiver-tabs .tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('#receiver-tabs .tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const r = tab.dataset.receiver;
-        document.getElementById('receiver-content-son').style.display = r === 'son' ? '' : 'none';
-        document.getElementById('receiver-content-daughter').style.display = r === 'daughter' ? '' : 'none';
-        document.getElementById('receiver-title').textContent = recipientNames[r];
-      });
-    });
-
-    const sentRecipes = [];
 
     // Экранирование HTML
     function esc(str) {
@@ -237,9 +250,7 @@
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length === 0) return '<p style="color:#999">Пусто — нечего разбирать</p>';
 
-      // Паттерн для ингредиентов: строка содержит число + единицу измерения
       const unitPattern = /\d+\s*(г|гр|кг|мл|л|шт|ст\.?\s*л|ч\.?\s*л|стакан|щепот|пучок|зубч|долек|долька|банк|пачк|упаковк)/i;
-      // Или строка с "по вкусу", "на глаз"
       const tastePattern = /по вкусу|на глаз/i;
 
       const ingredients = [];
@@ -254,30 +265,122 @@
       }
 
       let html = '';
-
       if (ingredients.length > 0) {
         html += '<h3>Ингредиенты</h3><ul>';
-        for (const ing of ingredients) {
-          html += `<li>${esc(ing)}</li>`;
-        }
+        for (const ing of ingredients) html += `<li>${esc(ing)}</li>`;
         html += '</ul>';
       }
-
       if (steps.length > 0) {
         html += '<h3>Шаги</h3><ol>';
-        for (const step of steps) {
-          html += `<li>${esc(step)}</li>`;
-        }
+        for (const step of steps) html += `<li>${esc(step)}</li>`;
         html += '</ol>';
       }
-
-      if (!html) {
-        html = '<p style="color:#999">Не удалось разобрать — попробуй написать ингредиенты с количествами</p>';
-      }
-
+      if (!html) html = '<p style="color:#999">Не удалось разобрать</p>';
       return html;
     }
 
+    // --- Данные получателя ---
+    const senderColors = {
+      'Мама': '#FF6B6B',
+      'Папа': '#4D96FF',
+      'Брат': '#6BCB77',
+      'Сестра': '#FFD93D'
+    };
+
+    const allRecipes = [
+      { id: 1, title: 'Яичница по-польски', sender: 'Мама',
+        body: 'Яйца 3 шт\nМасло сливочное 20 г\nХлеб белый 2 шт\nСоль по вкусу\nРазогреть сковороду с маслом\nРазбить яйца, не перемешивать\nНакрыть крышкой на 3 минуты\nПодавать с поджаренным хлебом' },
+      { id: 2, title: 'Котлеты свиные', sender: 'Папа',
+        body: 'Свинина 500 г\nЛук 1 шт\nЧеснок 2 зубч\nХлеб 100 г\nЯйцо 1 шт\nСоль по вкусу\nПеремолоть мясо с луком и чесноком\nДобавить размоченный хлеб и яйцо\nСформировать котлеты\nОбжарить по 5 минут с каждой стороны\nДовести под крышкой 10 минут' },
+      { id: 3, title: 'Борщ выходного дня', sender: 'Мама',
+        body: 'Говядина 400 г\nСвёкла 1 шт\nКартошка 3 шт\nКапуста 300 г\nМорковь 1 шт\nЛук 1 шт\nТоматная паста 1 ст л\nВода 2 л\nСоль по вкусу\nСварить бульон из мяса полтора часа\nНатереть свёклу, обжарить с томатной пастой\nКартошку нарезать кубиками, капусту нашинковать\nВ бульон добавить картошку, варить 10 минут\nДобавить капусту и свёклу, варить ещё 10 минут\nЛук и морковь обжарить, добавить в борщ\nПосолить, дать настояться 20 минут' },
+      { id: 4, title: 'Сырники утренние', sender: 'Сестра',
+        body: 'Творог 400 г\nЯйцо 1 шт\nСахар 2 ст л\nМука 3 ст л\nСоль на глаз\nСмешать творог с яйцом и сахаром\nДобавить муку, перемешать\nСформировать лепёшки\nОбжарить на среднем огне по 3 минуты с каждой стороны\nПодавать со сметаной' },
+      { id: 5, title: 'Гречка по-флотски', sender: 'Брат',
+        body: 'Гречка 200 г\nФарш 300 г\nЛук 1 шт\nМорковь 1 шт\nМасло растительное 2 ст л\nСоль по вкусу\nСварить гречку до готовности\nОбжарить лук и морковь\nДобавить фарш, жарить 10 минут\nСмешать с гречкой\nПосолить и подавать' },
+      { id: 6, title: 'Пельмени в бульоне', sender: 'Папа',
+        body: 'Пельмени 400 г\nВода 1.5 л\nЛавровый лист 2 шт\nСоль по вкусу\nПерец горошком 5 шт\nВскипятить воду с лавровым листом и перцем\nЗабросить пельмени\nВарить 7 минут после всплытия\nПодавать в бульоне со сметаной и зеленью' },
+      { id: 7, title: 'Шарлотка домашняя', sender: 'Сестра',
+        body: 'Яйца 3 шт\nСахар 200 г\nМука 200 г\nЯблоки 3 шт\nМасло сливочное 10 г\nВзбить яйца с сахаром до пышности\nАккуратно добавить муку\nЯблоки нарезать дольками\nВыложить яблоки в смазанную форму\nЗалить тестом\nВыпекать 180 градусов 35 минут' },
+      { id: 8, title: 'Плов семейный', sender: 'Брат',
+        body: 'Рис 400 г\nБаранина 500 г\nМорковь 3 шт\nЛук 2 шт\nЧеснок 1 шт\nЗира 1 ч л\nМасло растительное 100 мл\nСоль по вкусу\nРазогреть масло в казане\nОбжарить мясо до корочки\nДобавить лук, затем морковь\nЗалить водой, тушить 40 минут\nДобавить зиру и соль\nВыложить рис, залить водой на 1 см выше\nГотовить на слабом огне 25 минут не мешая\nВоткнуть чеснок целиком\nДать настояться 15 минут' }
+    ];
+
+    let currentFilter = 'all';
+
+    // Фильтры
+    function renderFilters() {
+      const senders = ['all', ...Object.keys(senderColors)];
+      filterBar.innerHTML = senders.map(s => {
+        const isActive = s === currentFilter;
+        const label = s === 'all' ? 'Все' : s;
+        const bg = s === 'all' ? (isActive ? '#007aff' : '#f0f0f5') : (isActive ? senderColors[s] : '#f0f0f5');
+        const color = isActive ? '#fff' : '#666';
+        return `<button class="filter-chip ${isActive ? 'active' : ''}" data-filter="${esc(s)}" style="background:${bg};color:${color}">${esc(label)}</button>`;
+      }).join('');
+
+      filterBar.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          currentFilter = chip.dataset.filter;
+          renderFilters();
+          renderRecipeList();
+        });
+      });
+    }
+
+    // Список рецептов
+    function renderRecipeList() {
+      recipeDetailEl.style.display = 'none';
+      recipeListEl.style.display = '';
+
+      const filtered = currentFilter === 'all' ? allRecipes : allRecipes.filter(r => r.sender === currentFilter);
+
+      if (filtered.length === 0) {
+        recipeListEl.innerHTML = '<p class="empty">Нет рецептов</p>';
+        return;
+      }
+
+      recipeListEl.innerHTML = filtered.map(r => `
+        <div class="recipe-card" data-id="${r.id}" style="border-left-color:${senderColors[r.sender]}">
+          <span class="recipe-card-sender" style="background:${senderColors[r.sender]}">${esc(r.sender)}</span>
+          <div class="recipe-card-title">${esc(r.title)}</div>
+          <div class="recipe-card-preview">${esc(r.body.split('\n').slice(0, 2).join(', '))}</div>
+        </div>
+      `).join('');
+
+      recipeListEl.querySelectorAll('.recipe-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const recipe = allRecipes.find(r => r.id === Number(card.dataset.id));
+          if (recipe) showRecipeDetail(recipe);
+        });
+      });
+    }
+
+    // Детали рецепта
+    function showRecipeDetail(recipe) {
+      recipeListEl.style.display = 'none';
+      recipeDetailEl.style.display = '';
+
+      recipeDetailEl.innerHTML = `
+        <button class="detail-back" id="back-to-list">&larr; Назад</button>
+        <span class="recipe-card-sender" style="background:${senderColors[recipe.sender]};margin-bottom:8px">${esc(recipe.sender)}</span>
+        <h2 style="margin-bottom:16px">${esc(recipe.title)}</h2>
+        <div class="original-label">Оригинал</div>
+        <div class="original">${esc(recipe.body)}</div>
+        <div class="structured-label">Структурированная версия</div>
+        <div class="structured">${parseRecipe(recipe.body)}</div>
+      `;
+
+      document.getElementById('back-to-list').addEventListener('click', () => {
+        renderRecipeList();
+      });
+    }
+
+    // Init правая панель
+    renderFilters();
+    renderRecipeList();
+
+    // --- Мамина отправка ---
     sendBtn.addEventListener('click', () => {
       const title = titleInput.value.trim();
       const body = bodyInput.value.trim();
@@ -285,29 +388,26 @@
       if (!body) return;
 
       const recipient = selectedRecipient;
+      const recipientName = recipient === 'son' ? 'Сыну' : 'Дочке';
 
       // Сохранить в отправленные
-      sentRecipes.push({ title: title || 'Без названия', body, recipient });
       sentEmpty.style.display = 'none';
       const li = document.createElement('li');
       li.className = 'sent-item';
-      li.innerHTML = `<div class="sent-item-recipient">${esc(recipientNames[recipient])}</div><div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
+      li.innerHTML = `<div class="sent-item-recipient">${esc(recipientName)}</div><div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
       sentList.prepend(li);
 
       // Показать статус у мамы
       status.textContent = `Отправлено ${recipientLabels[recipient]}!`;
 
-      // Показать у получателя
-      const heading = title ? `<h2 style="margin-bottom:16px">${esc(title)}</h2>` : '';
-      const contentEl = document.getElementById('receiver-content-' + recipient);
-
-      contentEl.innerHTML = `
-        ${heading}
-        <div class="original-label">Оригинал от мамы</div>
-        <div class="original">${esc(body)}</div>
-        <div class="structured-label">Структурированная версия</div>
-        <div class="structured">${parseRecipe(body)}</div>
-      `;
+      // Добавить в общий список рецептов получателя
+      allRecipes.unshift({
+        id: Date.now(),
+        title: title || 'Без названия',
+        sender: 'Мама',
+        body: body
+      });
+      renderRecipeList();
     });
   </script>
 
