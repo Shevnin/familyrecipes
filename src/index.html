@@ -65,6 +65,29 @@
 
     .status { margin-top: 10px; color: #2e7d32; font-weight: 500; font-size: 14px; text-align: center; }
 
+    .tabs {
+      display: flex; gap: 0; margin-bottom: 16px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .tab {
+      flex: 1; padding: 10px 0; font-size: 14px; font-weight: 600;
+      background: none; color: #999; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; cursor: pointer; border-radius: 0;
+    }
+    .tab:hover { color: #666; background: none; }
+    .tab.active { color: #007aff; border-bottom-color: #007aff; }
+
+    .tab-content { display: none; flex-direction: column; flex: 1; }
+    .tab-content.active { display: flex; }
+
+    .sent-list { list-style: none; padding: 0; }
+    .sent-item {
+      padding: 12px; margin-bottom: 8px;
+      background: #f5f5f5; border-radius: 10px;
+    }
+    .sent-item-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .sent-item-preview { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .empty { color: #999; font-style: italic; margin-top: 60px; text-align: center; font-size: 15px; }
 
     .original {
@@ -97,12 +120,22 @@
       <div class="phone-notch"></div>
       <div class="phone-screen">
         <h1>Мама</h1>
-        <label for="title">Название рецепта</label>
-        <input type="text" id="title" placeholder="Например: Борщ бабушкин">
-        <label for="body">Рецепт</label>
-        <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
-        <button id="send">Отправить сыну</button>
-        <div class="status" id="status"></div>
+        <div class="tabs">
+          <button class="tab active" data-tab="new">Новый рецепт</button>
+          <button class="tab" data-tab="sent">Отправленные</button>
+        </div>
+        <div class="tab-content active" id="tab-new">
+          <label for="title">Название рецепта</label>
+          <input type="text" id="title" placeholder="Например: Борщ бабушкин">
+          <label for="body">Рецепт</label>
+          <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
+          <button id="send">Отправить сыну</button>
+          <div class="status" id="status"></div>
+        </div>
+        <div class="tab-content" id="tab-sent">
+          <ul class="sent-list" id="sent-list"></ul>
+          <p class="empty" id="sent-empty">Пока ничего не отправлено</p>
+        </div>
       </div>
     </div>
     <div class="phone-label">Передатчик</div>
@@ -128,6 +161,21 @@
     const sendBtn = document.getElementById('send');
     const status = document.getElementById('status');
     const sonContent = document.getElementById('son-content');
+    const sentList = document.getElementById('sent-list');
+    const sentEmpty = document.getElementById('sent-empty');
+
+    // Табы мамы
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    const sentRecipes = [];
 
     // Мок структурированной версии
     const MOCK_STRUCTURED = `
@@ -160,6 +208,14 @@
       const body = bodyInput.value.trim();
 
       if (!body) return;
+
+      // Сохранить в отправленные
+      sentRecipes.push({ title: title || 'Без названия', body });
+      sentEmpty.style.display = 'none';
+      const li = document.createElement('li');
+      li.className = 'sent-item';
+      li.innerHTML = `<div class="sent-item-title">${title || 'Без названия'}</div><div class="sent-item-preview">${body}</div>`;
+      sentList.prepend(li);
 
       // Показать статус у мамы
       status.textContent = 'Отправлено!';
