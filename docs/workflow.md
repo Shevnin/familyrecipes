@@ -1,14 +1,69 @@
-# FamilyRecipes Workflow (Discovery First)
-
-## Цель
-Сначала договориться о правильной идее и сценарии, потом переходить к реализации.
+# Workflow: Человек + ChatGPT (Codex) + Claude Code
 
 ## Роли
-- Человек (Owner): задает направление, выбирает приоритеты, принимает решения.
-- ChatGPT: ведет discovery, фиксирует решения, собирает roadmap и backlog.
-- Claude: подключается на фазе delivery и работает по task-card.
 
-## Цикл discovery
+- **Человек (Owner)**: решает что делать, приоритизирует, принимает результат.
+- **ChatGPT (Codex)**: продуктовая голова — гипотезы, flow, product brief, ревью документации, формулировка задач.
+- **Claude Code**: руки — пишет код, коммитит, пушит, деплоит, обновляет документацию.
+
+## Цикл работы
+
+1. **Codex** формулирует задачу → сохраняет в формате task-card (см. шаблон ниже).
+2. **Человек** кладёт файл задачи в `docs/tasks/` (например `001_parse_recipe.md`).
+3. **Человек** говорит Claude Code: "сделай задачу 001" или "сделай что в tasks".
+4. **Claude Code** читает файл, делает, коммитит, пушит. Помечает задачу как done.
+5. **Человек** после сессии с Claude Code кидает Codex файл сессии из `docs/sessions/` — Codex ревьюит, предлагает следующий шаг.
+
+## Шаблон задачи для Claude Code
+
+```markdown
+# Task: <short_name>
+
+Target: prototype | app
+Status: todo | in_progress | done
+
+## Что сделать
+<Описание задачи — что должно измениться>
+
+## Acceptance criteria
+- [ ] <проверяемый результат 1>
+- [ ] <проверяемый результат 2>
+
+## Не делаем
+- <что явно вне scope>
+```
+
+### Поле Target (обязательное)
+
+- **prototype** — работа в `src/index.html`, GitHub Pages. Можно хардкодить, мокать, без тестов. Скорость важнее архитектуры.
+- **app** — реальное мобильное приложение. Архитектура, тесты, качество кода.
+
+## Где что лежит
+
+- `docs/tasks/` — задачи для Claude Code (создаёт Codex или Человек)
+- `docs/sessions/` — итоги сессий с Claude Code (создаёт Claude Code)
+- `docs/backlog.md` — общий бэклог продукта (ведёт Codex)
+- `docs/roadmap.md` — roadmap (ведёт Codex)
+- `docs/decisions.md` — лог решений (пополняют все)
+- `src/` — прототип (ведёт Claude Code)
+
+## Правила для Claude Code
+
+- Читай задачу из `docs/tasks/` перед началом работы.
+- После завершения: пометь задачу done, обнови `docs/sessions/`, закоммить и запуши.
+- Не рефакторь за пределами scope задачи.
+- Если задача на prototype — делай быстро, моки ок, один файл ок.
+- Если задача на app — архитектура, тесты, качество.
+
+## Правила для Codex
+
+- Формулируй задачи по шаблону выше. Поле `Target` обязательно.
+- Не пиши код — только задачи и продуктовые документы.
+- После каждой сессии Claude Code — получи файл из `docs/sessions/`, ревьюй, предложи следующий шаг.
+- Держи `backlog.md` и `roadmap.md` в актуальном состоянии.
+
+## Цикл discovery (для Codex)
+
 1. **Idea framing**: для кого делаем и какую проблему решаем.
 2. **Problem validation**: почему проблема реальна и как ее решают сейчас.
 3. **Value proposition**: чем мы лучше текущих альтернатив.
@@ -20,20 +75,10 @@
 9. **Decision**: `continue`, `pivot` или `stop`.
 
 ## Обязательные артефакты
-- Продуктовая рамка: `/Users/user/git-project/familyrecipes/docs/product_brief.md`
-- Roadmap: `/Users/user/git-project/familyrecipes/docs/roadmap.md`
-- Backlog: `/Users/user/git-project/familyrecipes/docs/backlog.md`
-- Журнал решений: `/Users/user/git-project/familyrecipes/docs/decisions.md`
-- Протоколы сессий: `/Users/user/git-project/familyrecipes/docs/sessions/`
-- Шаблоны: `/Users/user/git-project/familyrecipes/docs/templates/`
 
-## Формат сессии
-1. Вход: тема, гипотеза, что хотим проверить.
-2. Разбор: пользователь, боль, альтернативы, главный риск.
-3. Выход: что решили и какие файлы обновили.
-
-## Условие перехода в delivery
-- Есть 1 приоритетный flow.
-- Есть roadmap минимум на 2 фазы.
-- Есть backlog с приоритетами и критериями готовности.
-- Есть task-card шаблон и готовый набор первых задач.
+- Продуктовая рамка: `docs/product_brief.md`
+- Roadmap: `docs/roadmap.md`
+- Backlog: `docs/backlog.md`
+- Журнал решений: `docs/decisions.md`
+- Протоколы сессий: `docs/sessions/`
+- Шаблоны: `docs/templates/`
