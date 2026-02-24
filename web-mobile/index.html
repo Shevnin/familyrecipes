@@ -103,6 +103,7 @@
       border-radius: 10px; display: inline-block;
     }
     .badge-link { background: #e3f2fd; color: #1565c0; }
+    .badge-demo { background: #f3e5f5; color: #7b1fa2; }
     .badge-pending { background: #fff3e0; color: #e65100; }
     .badge-fulfilled { background: #e8f5e9; color: #2e7d32; }
 
@@ -370,11 +371,31 @@
       const recipeListEl = document.getElementById('recipe-list');
       const recipeDetailEl = document.getElementById('recipe-detail');
 
+      // Demo recipes
+      const demoRecipes = [
+        { id: 'demo-1', title: 'Яичница по-польски', sender: 'Мама', source: 'demo',
+          body: 'Яйца 3 шт\nМасло сливочное 20 г\nХлеб белый 2 шт\nСоль по вкусу\nРазогреть сковороду с маслом\nРазбить яйца, не перемешивать\nНакрыть крышкой на 3 минуты\nПодавать с поджаренным хлебом' },
+        { id: 'demo-2', title: 'Котлеты свиные', sender: 'Папа', source: 'demo',
+          body: 'Свинина 500 г\nЛук 1 шт\nЧеснок 2 зубч\nХлеб 100 г\nЯйцо 1 шт\nСоль по вкусу\nПеремолоть мясо с луком и чесноком\nДобавить размоченный хлеб и яйцо\nСформировать котлеты\nОбжарить по 5 минут с каждой стороны\nДовести под крышкой 10 минут' },
+        { id: 'demo-3', title: 'Борщ выходного дня', sender: 'Мама', source: 'demo',
+          body: 'Говядина 400 г\nСвёкла 1 шт\nКартошка 3 шт\nКапуста 300 г\nМорковь 1 шт\nЛук 1 шт\nТоматная паста 1 ст л\nВода 2 л\nСоль по вкусу\nСварить бульон из мяса полтора часа\nНатереть свёклу, обжарить с томатной пастой\nКартошку нарезать кубиками, капусту нашинковать\nВ бульон добавить картошку, варить 10 минут\nДобавить капусту и свёклу, варить ещё 10 минут\nЛук и морковь обжарить, добавить в борщ\nПосолить, дать настояться 20 минут' },
+        { id: 'demo-4', title: 'Сырники утренние', sender: 'Сестра', source: 'demo',
+          body: 'Творог 400 г\nЯйцо 1 шт\nСахар 2 ст л\nМука 3 ст л\nСоль на глаз\nСмешать творог с яйцом и сахаром\nДобавить муку, перемешать\nСформировать лепёшки\nОбжарить на среднем огне по 3 минуты с каждой стороны\nПодавать со сметаной' },
+        { id: 'demo-5', title: 'Гречка по-флотски', sender: 'Брат', source: 'demo',
+          body: 'Гречка 200 г\nФарш 300 г\nЛук 1 шт\nМорковь 1 шт\nМасло растительное 2 ст л\nСоль по вкусу\nСварить гречку до готовности\nОбжарить лук и морковь\nДобавить фарш, жарить 10 минут\nСмешать с гречкой\nПосолить и подавать' },
+        { id: 'demo-6', title: 'Пельмени в бульоне', sender: 'Папа', source: 'demo',
+          body: 'Пельмени 400 г\nВода 1.5 л\nЛавровый лист 2 шт\nСоль по вкусу\nПерец горошком 5 шт\nВскипятить воду с лавровым листом и перцем\nЗабросить пельмени\nВарить 7 минут после всплытия\nПодавать в бульоне со сметаной и зеленью' },
+        { id: 'demo-7', title: 'Шарлотка домашняя', sender: 'Сестра', source: 'demo',
+          body: 'Яйца 3 шт\nСахар 200 г\nМука 200 г\nЯблоки 3 шт\nМасло сливочное 10 г\nВзбить яйца с сахаром до пышности\nАккуратно добавить муку\nЯблоки нарезать дольками\nВыложить яблоки в смазанную форму\nЗалить тестом\nВыпекать 180 градусов 35 минут' },
+        { id: 'demo-8', title: 'Плов семейный', sender: 'Брат', source: 'demo',
+          body: 'Рис 400 г\nБаранина 500 г\nМорковь 3 шт\nЛук 2 шт\nЧеснок 1 шт\nЗира 1 ч л\nМасло растительное 100 мл\nСоль по вкусу\nРазогреть масло в казане\nОбжарить мясо до корочки\nДобавить лук, затем морковь\nЗалить водой, тушить 40 минут\nДобавить зиру и соль\nВыложить рис, залить водой на 1 см выше\nГотовить на слабом огне 25 минут не мешая\nВоткнуть чеснок целиком\nДать настояться 15 минут' }
+      ];
+
       // Recipe list
       function getRecipes() {
         const responses = loadJSON('recipe_responses');
         const requests = loadJSON('recipe_requests');
-        return responses.map(resp => {
+        const userRecipes = responses.map(resp => {
           const req = requests.find(r => r.token === resp.token);
           return {
             id: 'r-' + resp.token,
@@ -385,6 +406,7 @@
             created_at: resp.created_at
           };
         });
+        return [...userRecipes, ...demoRecipes];
       }
 
       function renderRecipeList() {
@@ -402,16 +424,18 @@
           return;
         }
 
-        recipeListEl.innerHTML = recipes.map(r => `
+        recipeListEl.innerHTML = recipes.map(r => {
+          const badge = r.source === 'link'
+            ? '<span class="badge badge-link">по ссылке</span>'
+            : '<span class="badge badge-demo">демо</span>';
+          const date = r.created_at ? `<span style="font-size:12px;color:#8e8e93">${formatDate(r.created_at)}</span>` : '';
+          return `
           <div class="recipe-card" data-id="${esc(r.id)}">
             <div class="recipe-card-title">${esc(r.title)}</div>
             <div class="recipe-card-author">от ${esc(r.sender)}</div>
-            <div class="recipe-card-meta">
-              <span class="badge badge-link">по ссылке</span>
-              <span style="font-size:12px;color:#8e8e93">${formatDate(r.created_at)}</span>
-            </div>
-          </div>
-        `).join('');
+            <div class="recipe-card-meta">${badge}${date}</div>
+          </div>`;
+        }).join('');
 
         recipeListEl.querySelectorAll('.recipe-card').forEach(card => {
           card.addEventListener('click', () => {
@@ -428,7 +452,7 @@
         recipeDetailEl.innerHTML = `
           <button class="detail-back" id="back-btn">&larr; Назад</button>
           <div class="detail-title">${esc(recipe.title)}</div>
-          <div class="detail-author">от ${esc(recipe.sender)} · ${formatDate(recipe.created_at)}</div>
+          <div class="detail-author">от ${esc(recipe.sender)}${recipe.created_at ? ' · ' + formatDate(recipe.created_at) : ''}</div>
           <div class="section-label">Оригинал</div>
           <div class="original-block">${esc(recipe.body)}</div>
           <div class="section-label">Структурированная версия</div>
