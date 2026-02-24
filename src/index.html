@@ -171,6 +171,28 @@
     }
     .request-item-link:hover { text-decoration: underline; }
     .request-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #fff3e0; color: #e65100; }
+    .request-status.fulfilled { background: #e8f5e9; color: #2e7d32; }
+
+    .reply-screen {
+      display: none; max-width: 400px; width: 100%;
+      margin: 0 auto; padding: 32px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .reply-screen h1 { font-size: 22px; margin-bottom: 8px; }
+    .reply-info {
+      background: #f5f0e8; border-left: 3px solid #c9a96e;
+      padding: 12px; border-radius: 8px; margin-bottom: 20px;
+      font-size: 14px; line-height: 1.5;
+    }
+    .reply-info strong { display: block; margin-bottom: 4px; }
+    .reply-success {
+      text-align: center; padding: 40px 20px;
+    }
+    .reply-success h2 { color: #2e7d32; margin-bottom: 8px; }
+    .reply-error {
+      text-align: center; padding: 60px 20px;
+    }
+    .reply-error h2 { color: #c62828; margin-bottom: 8px; }
 
     @media (max-width: 840px) {
       body { flex-direction: column; height: auto; padding: 16px; gap: 16px; }
@@ -179,6 +201,9 @@
   </style>
 </head>
 <body>
+
+  <!-- Ответ на запрос (по ссылке ?r=token) -->
+  <div class="reply-screen" id="reply-screen"></div>
 
   <!-- Мама -->
   <div>
@@ -242,6 +267,93 @@
   </div>
 
   <script>
+    // --- Reply flow: ?r=<token> ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const replyToken = urlParams.get('r');
+
+    if (replyToken) {
+      // Hide both phones
+      document.querySelectorAll('body > div').forEach(div => {
+        if (div.querySelector('.phone')) div.style.display = 'none';
+      });
+
+      const replyScreen = document.getElementById('reply-screen');
+      replyScreen.style.display = 'block';
+
+      // Escape helper (needed before main code)
+      function escReply(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      let requests = [];
+      try { requests = JSON.parse(localStorage.getItem('recipe_requests') || '[]'); } catch {}
+      const request = requests.find(r => r.token === replyToken);
+
+      if (!request) {
+        replyScreen.innerHTML = `
+          <div class="reply-error">
+            <h2>Запрос не найден</h2>
+            <p style="color:#888">Ссылка недействительна или запрос был удалён.</p>
+          </div>`;
+      } else if (request.status === 'fulfilled') {
+        replyScreen.innerHTML = `
+          <div class="reply-success">
+            <h2>Рецепт уже отправлен</h2>
+            <p style="color:#888">На этот запрос уже был дан ответ.</p>
+          </div>`;
+      } else {
+        replyScreen.innerHTML = `
+          <h1>Запрос рецепта</h1>
+          <div class="reply-info">
+            <strong>${escReply(request.target_person)}, вас просят поделиться рецептом:</strong>
+            ${escReply(request.requested_title)}
+          </div>
+          <label for="reply-title">Название рецепта</label>
+          <input type="text" id="reply-title" value="${escReply(request.requested_title)}">
+          <label for="reply-body">Рецепт</label>
+          <textarea id="reply-body" placeholder="Напишите рецепт своими словами…" style="min-height:200px"></textarea>
+          <button id="reply-submit">Отправить рецепт</button>
+          <div class="status" id="reply-status"></div>`;
+
+        document.getElementById('reply-submit').addEventListener('click', () => {
+          const body = document.getElementById('reply-body').value.trim();
+          const title = document.getElementById('reply-title').value.trim();
+          const statusEl = document.getElementById('reply-status');
+
+          if (!body) {
+            statusEl.style.color = '#c62828';
+            statusEl.textContent = 'Напишите рецепт перед отправкой';
+            return;
+          }
+
+          // Save response
+          let responses = [];
+          try { responses = JSON.parse(localStorage.getItem('recipe_responses') || '[]'); } catch {}
+          responses.push({
+            token: replyToken,
+            title: title || request.requested_title,
+            body: body,
+            created_at: new Date().toISOString()
+          });
+          localStorage.setItem('recipe_responses', JSON.stringify(responses));
+
+          // Update request status
+          request.status = 'fulfilled';
+          localStorage.setItem('recipe_requests', JSON.stringify(requests));
+
+          // Show success
+          replyScreen.innerHTML = `
+            <div class="reply-success">
+              <h2>Рецепт отправлен!</h2>
+              <p style="color:#888">Спасибо, ваш рецепт «${escReply(title || request.requested_title)}» сохранён.</p>
+            </div>`;
+        });
+      }
+    }
+    // --- End reply flow ---
+
     const titleInput = document.getElementById('title');
     const bodyInput = document.getElementById('body');
     const sendBtn = document.getElementById('send');
@@ -455,7 +567,7 @@
         const date = new Date(r.created_at).toLocaleDateString('ru-RU');
         return `<div class="request-item">
           <div class="request-item-title">${esc(r.requested_title)}</div>
-          <div class="request-item-meta">У кого: ${esc(r.target_person)} · ${date} <span class="request-status">${esc(r.status)}</span></div>
+          <div class="request-item-meta">У кого: ${esc(r.target_person)} · ${date} <span class="request-status ${r.status === 'fulfilled' ? 'fulfilled' : ''}">${r.status === 'fulfilled' ? 'выполнен' : 'ожидает'}</span></div>
           <div class="request-item-link" data-link="${esc(link)}">${esc(link)}</div>
         </div>`;
       }).join('');
