@@ -80,27 +80,6 @@
     .tab-content { display: none; flex-direction: column; flex: 1; }
     .tab-content.active { display: flex; }
 
-    .sent-list { list-style: none; padding: 0; }
-    .sent-item {
-      padding: 12px; margin-bottom: 8px;
-      background: #f5f5f5; border-radius: 10px;
-    }
-    .sent-item-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-    .sent-item-recipient { font-size: 12px; color: #007aff; margin-bottom: 4px; }
-    .sent-item-preview { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .recipient-toggle {
-      display: flex; gap: 0; margin-bottom: 12px;
-      background: #f0f0f5; border-radius: 10px; padding: 3px;
-    }
-    .recipient-btn {
-      flex: 1; padding: 8px 0; font-size: 14px; font-weight: 600;
-      background: none; color: #666; border: none; border-radius: 8px;
-      cursor: pointer;
-    }
-    .recipient-btn:hover { background: none; color: #333; }
-    .recipient-btn.active { background: #fff; color: #007aff; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-
     .empty { color: #999; font-style: italic; margin-top: 60px; text-align: center; font-size: 15px; }
 
     .filter-bar {
@@ -215,28 +194,13 @@
     <div class="phone phone-mom">
       <div class="phone-notch"></div>
       <div class="phone-screen">
-        <h1>Мама</h1>
-        <div class="tabs">
-          <button class="tab active" data-tab="new">Новый рецепт</button>
-          <button class="tab" data-tab="sent">Отправленные</button>
-        </div>
-        <div class="tab-content active" id="tab-new">
-          <label for="title">Название рецепта</label>
-          <input type="text" id="title" placeholder="Например: Борщ бабушкин">
-          <label for="body">Рецепт</label>
-          <textarea id="body" placeholder="Пиши как в мессенджере — свободно, своими словами…"></textarea>
-          <label>Кому</label>
-          <div class="recipient-toggle">
-            <button class="recipient-btn active" data-recipient="son">Сыну</button>
-            <button class="recipient-btn" data-recipient="daughter">Дочке</button>
-          </div>
-          <button id="send">Отправить</button>
-          <div class="status" id="status"></div>
-        </div>
-        <div class="tab-content" id="tab-sent">
-          <ul class="sent-list" id="sent-list"></ul>
-          <p class="empty" id="sent-empty">Пока ничего не отправлено</p>
-        </div>
+        <h1>Делимся</h1>
+        <label for="title">Название рецепта</label>
+        <input type="text" id="title" placeholder="Например: Борщ бабушкин">
+        <label for="body">Рецепт</label>
+        <textarea id="body" placeholder="Берёшь 3 яйца, разбиваешь на сковородку…"></textarea>
+        <button id="send">Отправить</button>
+        <div class="status" id="status"></div>
       </div>
     </div>
     <div class="phone-label">Передатчик</div>
@@ -363,33 +327,9 @@
     const bodyInput = document.getElementById('body');
     const sendBtn = document.getElementById('send');
     const status = document.getElementById('status');
-    const sentList = document.getElementById('sent-list');
-    const sentEmpty = document.getElementById('sent-empty');
     const recipeListEl = document.getElementById('recipe-list');
     const recipeDetailEl = document.getElementById('recipe-detail');
     const filterBar = document.getElementById('filter-bar');
-
-    // Табы мамы (Новый рецепт / Отправленные)
-    document.querySelectorAll('.phone-mom .tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.phone-mom .tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelectorAll('.phone-mom .tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-      });
-    });
-
-    // Выбор получателя у мамы
-    let selectedRecipient = 'son';
-    const recipientLabels = { son: 'сыну', daughter: 'дочке' };
-
-    document.querySelectorAll('.recipient-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.recipient-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedRecipient = btn.dataset.recipient;
-      });
-    });
 
     // Экранирование HTML
     function esc(str) {
@@ -664,35 +604,38 @@
     renderRecipeList();
     renderRequestList();
 
-    // --- Мамина отправка ---
+    // --- Мамина отправка (с переключением Отправить / Редактировать) ---
+    let momSent = false;
+
     sendBtn.addEventListener('click', () => {
-      const title = titleInput.value.trim();
-      const body = bodyInput.value.trim();
+      if (!momSent) {
+        // Отправка
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+        if (!body) return;
 
-      if (!body) return;
+        allRecipes.unshift({
+          id: Date.now(),
+          title: title || 'Без названия',
+          sender: 'Мама',
+          source: 'manual',
+          body: body
+        });
+        renderRecipeList();
 
-      const recipient = selectedRecipient;
-      const recipientName = recipient === 'son' ? 'Сыну' : 'Дочке';
-
-      // Сохранить в отправленные
-      sentEmpty.style.display = 'none';
-      const li = document.createElement('li');
-      li.className = 'sent-item';
-      li.innerHTML = `<div class="sent-item-recipient">${esc(recipientName)}</div><div class="sent-item-title">${esc(title || 'Без названия')}</div><div class="sent-item-preview">${esc(body)}</div>`;
-      sentList.prepend(li);
-
-      // Показать статус у мамы
-      status.textContent = `Отправлено ${recipientLabels[recipient]}!`;
-
-      // Добавить в общий список рецептов получателя
-      allRecipes.unshift({
-        id: Date.now(),
-        title: title || 'Без названия',
-        sender: 'Мама',
-        source: 'manual',
-        body: body
-      });
-      renderRecipeList();
+        titleInput.readOnly = true;
+        bodyInput.readOnly = true;
+        sendBtn.textContent = 'Редактировать';
+        status.textContent = 'Отправлено!';
+        momSent = true;
+      } else {
+        // Редактирование
+        titleInput.readOnly = false;
+        bodyInput.readOnly = false;
+        sendBtn.textContent = 'Отправить';
+        status.textContent = '';
+        momSent = false;
+      }
     });
   </script>
 
