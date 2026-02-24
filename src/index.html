@@ -151,6 +151,27 @@
     .structured ul, .structured ol { padding-left: 18px; }
     .structured li { margin-bottom: 3px; }
 
+    .link-box {
+      margin-top: 10px; padding: 10px; background: #e8f5e9;
+      border-radius: 10px; word-break: break-all; font-size: 13px;
+      cursor: pointer; position: relative;
+    }
+    .link-box:hover { background: #c8e6c9; }
+    .link-box-hint { font-size: 11px; color: #666; margin-top: 4px; }
+
+    .request-item {
+      padding: 10px 12px; margin-bottom: 8px;
+      background: #f5f5f5; border-radius: 10px;
+    }
+    .request-item-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .request-item-meta { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .request-item-link {
+      font-size: 12px; color: #007aff; word-break: break-all;
+      cursor: pointer;
+    }
+    .request-item-link:hover { text-decoration: underline; }
+    .request-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #fff3e0; color: #e65100; }
+
     @media (max-width: 840px) {
       body { flex-direction: column; height: auto; padding: 16px; gap: 16px; }
       .phone { width: 100%; max-width: 375px; height: 700px; }
@@ -197,9 +218,24 @@
       <div class="phone-notch"></div>
       <div class="phone-screen">
         <h1>Рецепты от семьи</h1>
-        <div class="filter-bar" id="filter-bar"></div>
-        <div id="recipe-list"></div>
-        <div id="recipe-detail" style="display:none"></div>
+        <div class="tabs">
+          <button class="tab active" data-master-tab="recipes">Рецепты</button>
+          <button class="tab" data-master-tab="request">Запросить</button>
+        </div>
+        <div class="tab-content active" id="master-tab-recipes">
+          <div class="filter-bar" id="filter-bar"></div>
+          <div id="recipe-list"></div>
+          <div id="recipe-detail" style="display:none"></div>
+        </div>
+        <div class="tab-content" id="master-tab-request">
+          <label for="req-target">У кого просим</label>
+          <input type="text" id="req-target" placeholder="Например: Мама">
+          <label for="req-title">Название блюда</label>
+          <input type="text" id="req-title" placeholder="Например: Борщ">
+          <button id="create-link">Создать ссылку</button>
+          <div id="link-result"></div>
+          <div id="request-list" style="margin-top:16px"></div>
+        </div>
       </div>
     </div>
     <div class="phone-label">Мастер</div>
@@ -376,9 +412,103 @@
       });
     }
 
+    // Табы мастера (Рецепты / Запросить)
+    document.querySelectorAll('.phone-son .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.phone-son .tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.phone-son .tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('master-tab-' + tab.dataset.masterTab).classList.add('active');
+      });
+    });
+
+    // --- Запросы рецептов ---
+    const reqTargetInput = document.getElementById('req-target');
+    const reqTitleInput = document.getElementById('req-title');
+    const createLinkBtn = document.getElementById('create-link');
+    const linkResultEl = document.getElementById('link-result');
+    const requestListEl = document.getElementById('request-list');
+
+    function loadRequests() {
+      try {
+        return JSON.parse(localStorage.getItem('recipe_requests') || '[]');
+      } catch { return []; }
+    }
+
+    function saveRequests(requests) {
+      localStorage.setItem('recipe_requests', JSON.stringify(requests));
+    }
+
+    function buildRequestLink(token) {
+      const base = window.location.href.split('?')[0];
+      return base + '?r=' + token;
+    }
+
+    function renderRequestList() {
+      const requests = loadRequests();
+      if (requests.length === 0) {
+        requestListEl.innerHTML = '<p class="empty" style="margin-top:20px">Нет запросов</p>';
+        return;
+      }
+      requestListEl.innerHTML = requests.map(r => {
+        const link = buildRequestLink(r.token);
+        const date = new Date(r.created_at).toLocaleDateString('ru-RU');
+        return `<div class="request-item">
+          <div class="request-item-title">${esc(r.requested_title)}</div>
+          <div class="request-item-meta">У кого: ${esc(r.target_person)} · ${date} <span class="request-status">${esc(r.status)}</span></div>
+          <div class="request-item-link" data-link="${esc(link)}">${esc(link)}</div>
+        </div>`;
+      }).join('');
+
+      requestListEl.querySelectorAll('.request-item-link').forEach(el => {
+        el.addEventListener('click', () => {
+          navigator.clipboard.writeText(el.dataset.link).then(() => {
+            const orig = el.textContent;
+            el.textContent = 'Скопировано!';
+            setTimeout(() => { el.textContent = orig; }, 1500);
+          });
+        });
+      });
+    }
+
+    createLinkBtn.addEventListener('click', () => {
+      const target = reqTargetInput.value.trim();
+      const title = reqTitleInput.value.trim();
+      if (!target || !title) return;
+
+      const token = crypto.randomUUID();
+      const request = {
+        id: Date.now(),
+        token,
+        requester: 'Я',
+        target_person: target,
+        requested_title: title,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
+      const requests = loadRequests();
+      requests.unshift(request);
+      saveRequests(requests);
+
+      const link = buildRequestLink(token);
+      linkResultEl.innerHTML = `<div class="link-box" id="copy-link" data-link="${esc(link)}">${esc(link)}<div class="link-box-hint">Нажмите чтобы скопировать</div></div>`;
+      document.getElementById('copy-link').addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.link).then(() => {
+          this.querySelector('.link-box-hint').textContent = 'Скопировано!';
+          setTimeout(() => { this.querySelector('.link-box-hint').textContent = 'Нажмите чтобы скопировать'; }, 1500);
+        });
+      });
+
+      reqTargetInput.value = '';
+      reqTitleInput.value = '';
+      renderRequestList();
+    });
+
     // Init правая панель
     renderFilters();
     renderRecipeList();
+    renderRequestList();
 
     // --- Мамина отправка ---
     sendBtn.addEventListener('click', () => {
