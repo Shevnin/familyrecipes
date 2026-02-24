@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Рецепты">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Семейные рецепты</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* --- Header --- */
+    .header {
+      background: #fff;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #e5e5ea;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header h1 { font-size: 28px; font-weight: 700; }
+    .header p { font-size: 13px; color: #8e8e93; margin-top: 2px; }
+
+    /* --- Tabs --- */
+    .tabs {
+      display: flex; background: #fff;
+      border-bottom: 1px solid #e5e5ea;
+      position: sticky; top: 60px; z-index: 9;
+    }
+    .tab-btn {
+      flex: 1; padding: 12px 0; font-size: 14px; font-weight: 600;
+      background: none; color: #8e8e93; border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    .tab-btn.active { color: #007aff; border-bottom-color: #007aff; }
+
+    /* --- Content area --- */
+    .content { padding: 16px 20px 100px; }
+
+    /* --- Form elements --- */
+    label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: #6e6e73; margin-bottom: 6px; text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    input[type="text"], textarea {
+      width: 100%; padding: 12px 14px; font-size: 16px;
+      border: 1px solid #d1d1d6; border-radius: 12px;
+      background: #fff; margin-bottom: 16px;
+      -webkit-appearance: none;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none; border-color: #007aff;
+      box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+    }
+    textarea { resize: none; min-height: 180px; line-height: 1.5; }
+
+    .btn {
+      display: block; width: 100%;
+      padding: 14px; font-size: 16px; font-weight: 600;
+      background: #007aff; color: #fff; border: none; border-radius: 14px;
+      cursor: pointer; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { opacity: 0.85; }
+    .btn-secondary { background: #e5e5ea; color: #1c1c1e; }
+
+    /* --- Link box --- */
+    .link-box {
+      margin-top: 16px; padding: 14px; background: #e8f5e9;
+      border-radius: 12px; word-break: break-all; font-size: 14px;
+      cursor: pointer; position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .link-box:active { background: #c8e6c9; }
+    .link-hint { font-size: 12px; color: #6e6e73; margin-top: 6px; }
+
+    /* --- Recipe card --- */
+    .recipe-card {
+      background: #fff; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .recipe-card:active { background: #f2f2f7; }
+    .recipe-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .recipe-card-author { font-size: 13px; color: #8e8e93; }
+    .recipe-card-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px; display: inline-block;
+    }
+    .badge-link { background: #e3f2fd; color: #1565c0; }
+    .badge-pending { background: #fff3e0; color: #e65100; }
+    .badge-fulfilled { background: #e8f5e9; color: #2e7d32; }
+
+    /* --- Request item --- */
+    .request-item {
+      background: #fff; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .request-item-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .request-item-info { font-size: 13px; color: #8e8e93; margin-bottom: 6px; }
+    .request-item-link {
+      font-size: 13px; color: #007aff; word-break: break-all;
+      cursor: pointer;
+    }
+    .request-item-link:active { opacity: 0.7; }
+
+    /* --- Empty state --- */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state-text { font-size: 15px; color: #8e8e93; line-height: 1.5; }
+
+    /* --- Detail view --- */
+    .detail-back {
+      display: inline-block; font-size: 15px; font-weight: 500;
+      color: #007aff; background: none; border: none;
+      cursor: pointer; padding: 0; margin-bottom: 16px;
+    }
+    .detail-back:active { opacity: 0.7; }
+    .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .detail-author { font-size: 14px; color: #8e8e93; margin-bottom: 16px; }
+    .section-label {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #8e8e93; margin-bottom: 8px;
+    }
+    .original-block {
+      background: #fff; border-left: 3px solid #c9a96e;
+      padding: 14px; border-radius: 12px; white-space: pre-wrap;
+      font-size: 15px; line-height: 1.6; margin-bottom: 20px;
+    }
+    .structured { font-size: 15px; line-height: 1.6; }
+    .structured h3 { font-size: 16px; margin: 14px 0 8px; }
+    .structured h3:first-child { margin-top: 0; }
+    .structured ul, .structured ol { padding-left: 20px; }
+    .structured li { margin-bottom: 4px; }
+
+    /* --- Reply screen --- */
+    .reply-screen {
+      min-height: 100vh; padding: 20px;
+      display: flex; flex-direction: column;
+    }
+    .reply-header { margin-bottom: 24px; }
+    .reply-header h1 { font-size: 24px; font-weight: 700; }
+    .reply-header p { font-size: 14px; color: #8e8e93; margin-top: 4px; }
+    .reply-info {
+      background: #fff; border-left: 3px solid #007aff;
+      padding: 14px; border-radius: 12px; margin-bottom: 20px;
+      font-size: 15px;
+    }
+    .reply-info strong { display: block; font-size: 13px; color: #8e8e93; margin-bottom: 4px; font-weight: 600; }
+    .reply-success, .reply-error {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 40px 20px;
+    }
+    .reply-success h2 { font-size: 22px; color: #2e7d32; margin-bottom: 8px; }
+    .reply-error h2 { font-size: 22px; color: #c62828; margin-bottom: 8px; }
+    .reply-success p, .reply-error p { font-size: 15px; color: #8e8e93; }
+
+    .status-msg {
+      text-align: center; font-size: 14px; font-weight: 500;
+      margin-top: 12px; min-height: 20px;
+    }
+    .status-ok { color: #2e7d32; }
+    .status-err { color: #c62828; }
+  </style>
+</head>
+<body>
+
+  <!-- ====== REPLY SCREEN (by link) ====== -->
+  <div class="screen" id="screen-reply">
+    <div class="reply-screen" id="reply-container"></div>
+  </div>
+
+  <!-- ====== MAIN SCREEN (requester) ====== -->
+  <div class="screen active" id="screen-main">
+    <div class="header">
+      <h1>Семейные рецепты</h1>
+      <p>Собирай рецепты у близких</p>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="recipes">Рецепты</button>
+      <button class="tab-btn" data-tab="request">Запросить</button>
+    </div>
+
+    <!-- Tab: Recipes -->
+    <div class="content tab-panel active" id="panel-recipes">
+      <div id="recipe-list"></div>
+      <div id="recipe-detail" style="display:none"></div>
+    </div>
+
+    <!-- Tab: Request -->
+    <div class="content tab-panel" id="panel-request">
+      <label for="req-target">У кого просим</label>
+      <input type="text" id="req-target" placeholder="Например: Мама">
+      <label for="req-title">Какое блюдо</label>
+      <input type="text" id="req-title" placeholder="Например: Борщ">
+      <button class="btn" id="create-link">Создать ссылку</button>
+      <div id="link-result"></div>
+      <div style="margin-top:24px">
+        <label style="margin-bottom:12px">История запросов</label>
+        <div id="request-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== Helpers ==========
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function loadJSON(key) {
+      try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+    }
+
+    function saveJSON(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function buildLink(token) {
+      return window.location.href.split('?')[0] + '?r=' + token;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+
+    // ========== Recipe parser ==========
+    function parseRecipe(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return '<p style="color:#8e8e93">Пусто</p>';
+
+      const unitPattern = /\d+\s*(г|гр|кг|мл|л|шт|ст\.?\s*л|ч\.?\s*л|стакан|щепот|пучок|зубч|долек|долька|банк|пачк|упаковк)/i;
+      const tastePattern = /по вкусу|на глаз/i;
+
+      const ingredients = [];
+      const steps = [];
+
+      for (const line of lines) {
+        if (unitPattern.test(line) || tastePattern.test(line)) {
+          ingredients.push(line);
+        } else {
+          steps.push(line);
+        }
+      }
+
+      let html = '';
+      if (ingredients.length > 0) {
+        html += '<h3>Ингредиенты</h3><ul>';
+        for (const ing of ingredients) html += `<li>${esc(ing)}</li>`;
+        html += '</ul>';
+      }
+      if (steps.length > 0) {
+        html += '<h3>Шаги</h3><ol>';
+        for (const step of steps) html += `<li>${esc(step)}</li>`;
+        html += '</ol>';
+      }
+      return html || '<p style="color:#8e8e93">Не удалось разобрать</p>';
+    }
+
+    // ========== Reply flow (?r=token) ==========
+    const urlParams = new URLSearchParams(window.location.search);
+    const replyToken = urlParams.get('r');
+
+    if (replyToken) {
+      document.getElementById('screen-main').classList.remove('active');
+      const replyScreen = document.getElementById('screen-reply');
+      replyScreen.classList.add('active');
+      const container = document.getElementById('reply-container');
+
+      const requests = loadJSON('recipe_requests');
+      const request = requests.find(r => r.token === replyToken);
+
+      if (!request) {
+        container.innerHTML = `
+          <div class="reply-error">
+            <h2>Запрос не найден</h2>
+            <p>Ссылка недействительна или запрос был удалён.</p>
+          </div>`;
+      } else if (request.status === 'fulfilled') {
+        container.innerHTML = `
+          <div class="reply-success">
+            <h2>Рецепт уже отправлен</h2>
+            <p>На этот запрос уже ответили. Спасибо!</p>
+          </div>`;
+      } else {
+        container.innerHTML = `
+          <div class="reply-header">
+            <h1>Делимся</h1>
+            <p>Вас попросили поделиться рецептом</p>
+          </div>
+          <div class="reply-info">
+            <strong>Просят</strong>
+            ${esc(request.requested_title)}
+          </div>
+          <label for="reply-title">Название рецепта</label>
+          <input type="text" id="reply-title" value="${esc(request.requested_title)}">
+          <label for="reply-body">Рецепт</label>
+          <textarea id="reply-body" placeholder="Берёшь ..."></textarea>
+          <button class="btn" id="reply-submit">Отправить рецепт</button>
+          <div class="status-msg" id="reply-status"></div>`;
+
+        document.getElementById('reply-submit').addEventListener('click', () => {
+          const body = document.getElementById('reply-body').value.trim();
+          const title = document.getElementById('reply-title').value.trim();
+          const statusEl = document.getElementById('reply-status');
+
+          if (!body) {
+            statusEl.className = 'status-msg status-err';
+            statusEl.textContent = 'Напишите рецепт перед отправкой';
+            return;
+          }
+
+          // Save response
+          const responses = loadJSON('recipe_responses');
+          responses.push({
+            token: replyToken,
+            title: title || request.requested_title,
+            body: body,
+            sender: request.target_person,
+            created_at: new Date().toISOString()
+          });
+          saveJSON('recipe_responses', responses);
+
+          // Update request status
+          request.status = 'fulfilled';
+          saveJSON('recipe_requests', requests);
+
+          container.innerHTML = `
+            <div class="reply-success">
+              <h2>Рецепт отправлен!</h2>
+              <p>Спасибо! Рецепт «${esc(title || request.requested_title)}» сохранён.</p>
+            </div>`;
+        });
+      }
+    }
+
+    // ========== Main screen ==========
+    if (!replyToken) {
+      // Tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+        });
+      });
+
+      const recipeListEl = document.getElementById('recipe-list');
+      const recipeDetailEl = document.getElementById('recipe-detail');
+
+      // Recipe list
+      function getRecipes() {
+        const responses = loadJSON('recipe_responses');
+        const requests = loadJSON('recipe_requests');
+        return responses.map(resp => {
+          const req = requests.find(r => r.token === resp.token);
+          return {
+            id: 'r-' + resp.token,
+            title: resp.title,
+            sender: resp.sender || (req ? req.target_person : 'Неизвестно'),
+            body: resp.body,
+            source: 'link',
+            created_at: resp.created_at
+          };
+        });
+      }
+
+      function renderRecipeList() {
+        recipeDetailEl.style.display = 'none';
+        recipeListEl.style.display = '';
+
+        const recipes = getRecipes();
+
+        if (recipes.length === 0) {
+          recipeListEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📖</div>
+              <div class="empty-state-text">Пока нет рецептов.<br>Запросите первый рецепт у близких!</div>
+            </div>`;
+          return;
+        }
+
+        recipeListEl.innerHTML = recipes.map(r => `
+          <div class="recipe-card" data-id="${esc(r.id)}">
+            <div class="recipe-card-title">${esc(r.title)}</div>
+            <div class="recipe-card-author">от ${esc(r.sender)}</div>
+            <div class="recipe-card-meta">
+              <span class="badge badge-link">по ссылке</span>
+              <span style="font-size:12px;color:#8e8e93">${formatDate(r.created_at)}</span>
+            </div>
+          </div>
+        `).join('');
+
+        recipeListEl.querySelectorAll('.recipe-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const recipe = getRecipes().find(r => r.id === card.dataset.id);
+            if (recipe) showDetail(recipe);
+          });
+        });
+      }
+
+      function showDetail(recipe) {
+        recipeListEl.style.display = 'none';
+        recipeDetailEl.style.display = '';
+
+        recipeDetailEl.innerHTML = `
+          <button class="detail-back" id="back-btn">&larr; Назад</button>
+          <div class="detail-title">${esc(recipe.title)}</div>
+          <div class="detail-author">от ${esc(recipe.sender)} · ${formatDate(recipe.created_at)}</div>
+          <div class="section-label">Оригинал</div>
+          <div class="original-block">${esc(recipe.body)}</div>
+          <div class="section-label">Структурированная версия</div>
+          <div class="structured">${parseRecipe(recipe.body)}</div>
+        `;
+
+        document.getElementById('back-btn').addEventListener('click', renderRecipeList);
+      }
+
+      renderRecipeList();
+
+      // --- Request form ---
+      const reqTarget = document.getElementById('req-target');
+      const reqTitle = document.getElementById('req-title');
+      const createBtn = document.getElementById('create-link');
+      const linkResult = document.getElementById('link-result');
+      const requestListEl = document.getElementById('request-list');
+
+      function renderRequestList() {
+        const requests = loadJSON('recipe_requests');
+        if (requests.length === 0) {
+          requestListEl.innerHTML = `
+            <div class="empty-state" style="padding:30px 0">
+              <div class="empty-state-text">Нет запросов</div>
+            </div>`;
+          return;
+        }
+
+        requestListEl.innerHTML = requests.map(r => {
+          const link = buildLink(r.token);
+          const statusClass = r.status === 'fulfilled' ? 'badge-fulfilled' : 'badge-pending';
+          const statusText = r.status === 'fulfilled' ? 'получен' : 'ожидает';
+          return `
+            <div class="request-item">
+              <div class="request-item-title">${esc(r.requested_title)}</div>
+              <div class="request-item-info">
+                У кого: ${esc(r.target_person)} · ${formatDate(r.created_at)}
+                <span class="badge ${statusClass}">${statusText}</span>
+              </div>
+              <div class="request-item-link" data-link="${esc(link)}">${esc(link)}</div>
+            </div>`;
+        }).join('');
+
+        requestListEl.querySelectorAll('.request-item-link').forEach(el => {
+          el.addEventListener('click', () => {
+            navigator.clipboard.writeText(el.dataset.link).then(() => {
+              const orig = el.textContent;
+              el.textContent = 'Скопировано!';
+              setTimeout(() => { el.textContent = orig; }, 1500);
+            });
+          });
+        });
+      }
+
+      createBtn.addEventListener('click', () => {
+        const target = reqTarget.value.trim();
+        const title = reqTitle.value.trim();
+        if (!target || !title) return;
+
+        const token = crypto.randomUUID();
+        const request = {
+          id: Date.now(),
+          token,
+          requester: 'Я',
+          target_person: target,
+          requested_title: title,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        };
+
+        const requests = loadJSON('recipe_requests');
+        requests.unshift(request);
+        saveJSON('recipe_requests', requests);
+
+        const link = buildLink(token);
+        linkResult.innerHTML = `
+          <div class="link-box" id="copy-link" data-link="${esc(link)}">
+            ${esc(link)}
+            <div class="link-hint">Нажмите чтобы скопировать</div>
+          </div>`;
+
+        document.getElementById('copy-link').addEventListener('click', function() {
+          navigator.clipboard.writeText(this.dataset.link).then(() => {
+            this.querySelector('.link-hint').textContent = 'Скопировано!';
+            setTimeout(() => { this.querySelector('.link-hint').textContent = 'Нажмите чтобы скопировать'; }, 1500);
+          });
+        });
+
+        reqTarget.value = '';
+        reqTitle.value = '';
+        renderRequestList();
+      });
+
+      renderRequestList();
+    }
+  </script>
+
+</body>
+</html>

@@ -9,25 +9,25 @@
 
 ## Где остановились
 - Текущий roadmap-этап: `R1 - Split Screen Prototype` (`docs/roadmap.md`)
-- Последняя зафиксированная сессия: `docs/sessions/2026-02-25_ui_cleanup.md`
-- Текущий прототип: `src/index.html`
-- Публичный URL: https://shevnin.github.io/familyrecipes/src/index.html
+- Последняя зафиксированная сессия: `docs/sessions/2026-02-25_web_mobile_v1.md`
 
-## Что умеет прототип
-1. **Передатчик ("Делимся"):** набирает название + рецепт → отправляет → поля блокируются, кнопка "Редактировать" для правки.
-2. **Мастер:** список "Рецепты от семьи" (8 демо + полученные по ссылкам), фильтр по отправителю, детальный просмотр (оригинал + структурированная версия через эвристический парсер).
-3. **Запрос рецепта:** Мастер создаёт запрос → генерируется ссылка с UUID → родственник открывает ссылку → заполняет рецепт → рецепт сохраняется в localStorage → появляется в списке с бейджем "по ссылке".
-4. **Персистентность:** `recipe_requests` и `recipe_responses` в localStorage.
+## Прототипы
+1. **Split-screen** (старый): `src/index.html` — два телефонных экрана рядом
+   - URL: https://shevnin.github.io/familyrecipes/src/index.html
+2. **Web Mobile** (новый, основной): `web-mobile/index.html` — мобильный web-app
+   - Requester: https://shevnin.github.io/familyrecipes/web-mobile/
+   - Reply: `https://shevnin.github.io/familyrecipes/web-mobile/?r=<token>`
 
-## Работающий flow (link request)
-```
-Мастер → "Запросить" → ссылка → Родственник → форма ответа → submit
-  → рецепт в списке + запрос fulfilled
-```
+## Что умеет web-mobile
+1. **Requester:** список полученных рецептов, запрос рецепта по ссылке, история запросов.
+2. **Reply flow:** родственник открывает ссылку → видит форму "Делимся" → вводит рецепт → submit.
+3. **Детали рецепта:** оригинал + структурированная версия (эвристический парсер).
+4. **iOS web-app:** meta для add-to-home-screen, safe-area, mobile-first UI.
+5. **Персистентность:** `recipe_requests` и `recipe_responses` в localStorage.
 
 ## Что сейчас в приоритете (P0)
-1. Показать прототип маме и собрать обратную связь.
-2. Итерация UI по результатам обратной связи.
+1. Тест web-mobile на реальном телефоне.
+2. Показать прототип маме и собрать обратную связь.
 
 ## Первый шаг в новой сессии
 1. Прочитать этот файл.
@@ -36,6 +36,6 @@
 
 ## Технический контекст
 - Branch: `main`
-- Один файл: `src/index.html` (plain HTML/JS, без фреймворков)
+- Файлы: `src/index.html` (split-screen), `web-mobile/index.html` (mobile)
 - localStorage ключи: `recipe_requests`, `recipe_responses`
 - Деплой: GitHub Pages (автоматический с main)
