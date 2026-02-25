@@ -373,7 +373,7 @@
 
       // Demo recipes
       const demoRecipes = [
-        { id: 'demo-1', title: 'Яичница по-польски', sender: 'Мама', source: 'demo',
+        { id: 'demo-1', title: 'Яичница по-польски', sender: 'Папа', source: 'demo',
           body: 'Яйца 3 шт\nМасло сливочное 20 г\nХлеб белый 2 шт\nСоль по вкусу\nРазогреть сковороду с маслом\nРазбить яйца, не перемешивать\nНакрыть крышкой на 3 минуты\nПодавать с поджаренным хлебом' },
         { id: 'demo-2', title: 'Котлеты свиные', sender: 'Папа', source: 'demo',
           body: 'Свинина 500 г\nЛук 1 шт\nЧеснок 2 зубч\nХлеб 100 г\nЯйцо 1 шт\nСоль по вкусу\nПеремолоть мясо с луком и чесноком\nДобавить размоченный хлеб и яйцо\nСформировать котлеты\nОбжарить по 5 минут с каждой стороны\nДовести под крышкой 10 минут' },
@@ -425,15 +425,12 @@
         }
 
         recipeListEl.innerHTML = recipes.map(r => {
-          const badge = r.source === 'link'
-            ? '<span class="badge badge-link">по ссылке</span>'
-            : '<span class="badge badge-demo">демо</span>';
           const date = r.created_at ? `<span style="font-size:12px;color:#8e8e93">${formatDate(r.created_at)}</span>` : '';
           return `
           <div class="recipe-card" data-id="${esc(r.id)}">
             <div class="recipe-card-title">${esc(r.title)}</div>
             <div class="recipe-card-author">от ${esc(r.sender)}</div>
-            <div class="recipe-card-meta">${badge}${date}</div>
+            ${date ? `<div class="recipe-card-meta">${date}</div>` : ''}
           </div>`;
         }).join('');
 
