@@ -8,14 +8,43 @@
   <meta name="apple-mobile-web-app-title" content="Рецепты">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Семейные рецепты</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #F2EEE6;
+      --bg-accent: #E9E2D5;
+      --surface: #FFFCF7;
+      --surface-2: #F8F3EA;
+      --text: #1B1A18;
+      --muted: #746E63;
+      --line: #DCCFB8;
+      --primary: #C26A2E;
+      --primary-2: #A95524;
+      --mom: #D95A63;
+      --dad: #2E6FD8;
+      --bro: #3D9B63;
+      --sis: #D6A800;
+      --radius-card: 20px;
+      --radius-input: 14px;
+      --radius-btn: 16px;
+      --shadow-card: 0 1px 4px rgba(27,26,24,.05), 0 4px 16px rgba(27,26,24,.04);
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Manrope', -apple-system, sans-serif;
+      --font-label: 'IBM Plex Sans', -apple-system, sans-serif;
+      --transition: 180ms ease;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f2f2f7;
-      color: #1c1c1e;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+      -webkit-font-smoothing: antialiased;
     }
 
     .screen { display: none; }
@@ -25,164 +54,331 @@
 
     /* --- Header --- */
     .header {
-      background: #fff;
-      padding: 16px 20px 12px;
-      border-bottom: 1px solid #e5e5ea;
+      background: var(--surface);
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--line);
       position: sticky; top: 0; z-index: 10;
     }
-    .header h1 { font-size: 28px; font-weight: 700; }
-    .header p { font-size: 13px; color: #8e8e93; margin-top: 2px; }
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 34px; font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-family: var(--font-body);
+      font-size: 14px; color: var(--muted);
+      margin-top: 2px; font-weight: 400;
+    }
 
-    /* --- Tabs --- */
+    /* --- Segment control tabs --- */
     .tabs {
-      display: flex; background: #fff;
-      border-bottom: 1px solid #e5e5ea;
-      position: sticky; top: 60px; z-index: 9;
+      display: flex;
+      background: var(--surface);
+      padding: 8px 20px 12px;
+      position: sticky; top: 73px; z-index: 9;
+      border-bottom: 1px solid var(--line);
+    }
+    .tabs-inner {
+      display: flex; width: 100%;
+      background: var(--bg-accent);
+      border-radius: 12px; padding: 3px;
     }
     .tab-btn {
-      flex: 1; padding: 12px 0; font-size: 14px; font-weight: 600;
-      background: none; color: #8e8e93; border: none;
-      border-bottom: 2px solid transparent;
+      flex: 1; padding: 9px 0;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600;
+      background: none; color: var(--muted);
+      border: none; border-radius: 10px;
       cursor: pointer;
+      transition: all var(--transition);
+      -webkit-tap-highlight-color: transparent;
     }
-    .tab-btn.active { color: #007aff; border-bottom-color: #007aff; }
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(27,26,24,.08);
+    }
 
     /* --- Content area --- */
-    .content { padding: 16px 20px 100px; }
+    .content { padding: 20px 20px 100px; }
 
     /* --- Form elements --- */
     label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: #6e6e73; margin-bottom: 6px; text-transform: uppercase;
-      letter-spacing: 0.3px;
+      display: block;
+      font-family: var(--font-label);
+      font-size: 12px; font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
     input[type="text"], textarea {
-      width: 100%; padding: 12px 14px; font-size: 16px;
-      border: 1px solid #d1d1d6; border-radius: 12px;
-      background: #fff; margin-bottom: 16px;
+      width: 100%; padding: 14px 16px;
+      font-family: var(--font-body);
+      font-size: 16px; color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-input);
+      background: var(--surface);
+      margin-bottom: 16px;
+      transition: border-color var(--transition), box-shadow var(--transition);
       -webkit-appearance: none;
     }
-    input[type="text"]:focus, textarea:focus {
-      outline: none; border-color: #007aff;
-      box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+    input[type="text"]::placeholder, textarea::placeholder {
+      color: var(--muted); opacity: 0.6;
     }
-    textarea { resize: none; min-height: 180px; line-height: 1.5; }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(194,106,46,.12);
+    }
+    textarea { resize: none; min-height: 180px; line-height: 1.6; }
 
     .btn {
       display: block; width: 100%;
-      padding: 14px; font-size: 16px; font-weight: 600;
-      background: #007aff; color: #fff; border: none; border-radius: 14px;
+      padding: 15px; font-size: 16px; font-weight: 700;
+      font-family: var(--font-body);
+      background: var(--primary); color: #fff;
+      border: none; border-radius: var(--radius-btn);
       cursor: pointer; text-align: center;
+      transition: background var(--transition), transform 100ms ease;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn:active { opacity: 0.85; }
-    .btn-secondary { background: #e5e5ea; color: #1c1c1e; }
+    .btn:active { background: var(--primary-2); transform: scale(0.98); }
+    .btn-secondary { background: var(--bg-accent); color: var(--text); }
+    .btn-secondary:active { background: var(--line); }
 
     /* --- Link box --- */
     .link-box {
-      margin-top: 16px; padding: 14px; background: #e8f5e9;
-      border-radius: 12px; word-break: break-all; font-size: 14px;
+      margin-top: 16px; padding: 16px;
+      background: #EDF5E8;
+      border: 1px solid #C5DCBA;
+      border-radius: var(--radius-input);
+      word-break: break-all; font-size: 14px;
+      color: var(--text);
       cursor: pointer; position: relative;
+      transition: background var(--transition);
       -webkit-tap-highlight-color: transparent;
     }
-    .link-box:active { background: #c8e6c9; }
-    .link-hint { font-size: 12px; color: #6e6e73; margin-top: 6px; }
+    .link-box:active { background: #DDE9D4; }
+    .link-hint {
+      font-family: var(--font-label);
+      font-size: 11px; color: var(--muted);
+      margin-top: 8px; text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
 
     /* --- Recipe card --- */
     .recipe-card {
-      background: #fff; border-radius: 14px;
-      padding: 14px 16px; margin-bottom: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 16px 18px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-card);
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--transition), box-shadow var(--transition);
       -webkit-tap-highlight-color: transparent;
     }
-    .recipe-card:active { background: #f2f2f7; }
-    .recipe-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-    .recipe-card-author { font-size: 13px; color: #8e8e93; }
-    .recipe-card-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
-    .badge {
-      font-size: 11px; font-weight: 600; padding: 2px 8px;
-      border-radius: 10px; display: inline-block;
+    .recipe-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--author-color, var(--muted));
     }
-    .badge-link { background: #e3f2fd; color: #1565c0; }
-    .badge-demo { background: #f3e5f5; color: #7b1fa2; }
-    .badge-pending { background: #fff3e0; color: #e65100; }
-    .badge-fulfilled { background: #e8f5e9; color: #2e7d32; }
+    .recipe-card:active {
+      transform: scale(0.985);
+      box-shadow: 0 1px 2px rgba(27,26,24,.04);
+    }
+    .recipe-card-title {
+      font-family: var(--font-display);
+      font-size: 19px; font-weight: 600;
+      margin-bottom: 6px; padding-left: 2px;
+      letter-spacing: -0.1px;
+    }
+    .recipe-card-meta {
+      display: flex; gap: 8px; align-items: center;
+      padding-left: 2px;
+    }
+    .author-chip {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-label);
+      font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 8px;
+      letter-spacing: 0.2px;
+    }
+    .recipe-card-date {
+      font-family: var(--font-label);
+      font-size: 12px; color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* --- Badges --- */
+    .badge {
+      font-family: var(--font-label);
+      font-size: 11px; font-weight: 600;
+      padding: 3px 9px; border-radius: 8px;
+      display: inline-block;
+      letter-spacing: 0.2px;
+    }
+    .badge-pending { background: #FFF0DC; color: #A85F00; }
+    .badge-fulfilled { background: #E4F2E0; color: #2A6E28; }
 
     /* --- Request item --- */
+    .request-section-title {
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 600;
+      color: var(--text);
+      margin-top: 32px; margin-bottom: 14px;
+      letter-spacing: -0.1px;
+    }
     .request-item {
-      background: #fff; border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
       padding: 14px 16px; margin-bottom: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      box-shadow: var(--shadow-card);
     }
-    .request-item-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-    .request-item-info { font-size: 13px; color: #8e8e93; margin-bottom: 6px; }
+    .request-item-title {
+      font-family: var(--font-display);
+      font-size: 16px; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .request-item-info {
+      font-size: 13px; color: var(--muted);
+      margin-bottom: 8px;
+      display: flex; gap: 6px; align-items: center;
+      flex-wrap: wrap;
+    }
     .request-item-link {
-      font-size: 13px; color: #007aff; word-break: break-all;
-      cursor: pointer;
+      font-size: 13px; color: var(--primary);
+      word-break: break-all; cursor: pointer;
+      transition: opacity var(--transition);
     }
-    .request-item-link:active { opacity: 0.7; }
+    .request-item-link:active { opacity: 0.6; }
 
     /* --- Empty state --- */
-    .empty-state {
-      text-align: center; padding: 60px 20px;
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.35; }
+    .empty-state-text {
+      font-size: 15px; color: var(--muted); line-height: 1.5;
     }
-    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
-    .empty-state-text { font-size: 15px; color: #8e8e93; line-height: 1.5; }
 
     /* --- Detail view --- */
     .detail-back {
-      display: inline-block; font-size: 15px; font-weight: 500;
-      color: #007aff; background: none; border: none;
-      cursor: pointer; padding: 0; margin-bottom: 16px;
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: var(--font-body);
+      font-size: 15px; font-weight: 600;
+      color: var(--primary); background: none; border: none;
+      cursor: pointer; padding: 0; margin-bottom: 20px;
+      transition: opacity var(--transition);
     }
-    .detail-back:active { opacity: 0.7; }
-    .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    .detail-author { font-size: 14px; color: #8e8e93; margin-bottom: 16px; }
+    .detail-back:active { opacity: 0.6; }
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 26px; font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: -0.2px;
+    }
+    .detail-author {
+      font-size: 14px; color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .detail-author-chip {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-label);
+      font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 8px;
+      letter-spacing: 0.2px;
+      margin-bottom: 20px;
+    }
     .section-label {
-      font-size: 12px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.5px; color: #8e8e93; margin-bottom: 8px;
+      font-family: var(--font-label);
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 10px;
     }
     .original-block {
-      background: #fff; border-left: 3px solid #c9a96e;
-      padding: 14px; border-radius: 12px; white-space: pre-wrap;
-      font-size: 15px; line-height: 1.6; margin-bottom: 20px;
+      background: var(--surface-2);
+      border-left: 3px solid var(--line);
+      padding: 16px; border-radius: var(--radius-input);
+      white-space: pre-wrap;
+      font-size: 15px; line-height: 1.7;
+      margin-bottom: 24px;
+      font-style: italic;
+      color: var(--text);
     }
-    .structured { font-size: 15px; line-height: 1.6; }
-    .structured h3 { font-size: 16px; margin: 14px 0 8px; }
+    .structured { font-size: 15px; line-height: 1.7; color: var(--text); }
+    .structured h3 {
+      font-family: var(--font-display);
+      font-size: 17px; font-weight: 600;
+      margin: 18px 0 8px;
+    }
     .structured h3:first-child { margin-top: 0; }
-    .structured ul, .structured ol { padding-left: 20px; }
-    .structured li { margin-bottom: 4px; }
+    .structured ul, .structured ol { padding-left: 22px; }
+    .structured li { margin-bottom: 6px; }
 
     /* --- Reply screen --- */
     .reply-screen {
       min-height: 100vh; padding: 20px;
       display: flex; flex-direction: column;
+      background: var(--bg);
     }
-    .reply-header { margin-bottom: 24px; }
-    .reply-header h1 { font-size: 24px; font-weight: 700; }
-    .reply-header p { font-size: 14px; color: #8e8e93; margin-top: 4px; }
+    .reply-header { margin-bottom: 28px; }
+    .reply-header h1 {
+      font-family: var(--font-display);
+      font-size: 28px; font-weight: 700;
+      color: var(--text);
+    }
+    .reply-header p {
+      font-size: 14px; color: var(--muted); margin-top: 4px;
+    }
     .reply-info {
-      background: #fff; border-left: 3px solid #007aff;
-      padding: 14px; border-radius: 12px; margin-bottom: 20px;
-      font-size: 15px;
+      background: var(--surface);
+      border-left: 3px solid var(--primary);
+      padding: 14px 16px; border-radius: var(--radius-input);
+      margin-bottom: 24px; font-size: 15px;
     }
-    .reply-info strong { display: block; font-size: 13px; color: #8e8e93; margin-bottom: 4px; font-weight: 600; }
+    .reply-info strong {
+      display: block;
+      font-family: var(--font-label);
+      font-size: 11px; color: var(--muted);
+      margin-bottom: 4px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
     .reply-success, .reply-error {
       flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; text-align: center;
-      padding: 40px 20px;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 40px 20px;
     }
-    .reply-success h2 { font-size: 22px; color: #2e7d32; margin-bottom: 8px; }
-    .reply-error h2 { font-size: 22px; color: #c62828; margin-bottom: 8px; }
-    .reply-success p, .reply-error p { font-size: 15px; color: #8e8e93; }
+    .reply-success h2 {
+      font-family: var(--font-display);
+      font-size: 24px; color: #2A6E28; margin-bottom: 8px;
+    }
+    .reply-error h2 {
+      font-family: var(--font-display);
+      font-size: 24px; color: #B73A3A; margin-bottom: 8px;
+    }
+    .reply-success p, .reply-error p {
+      font-size: 15px; color: var(--muted);
+    }
 
     .status-msg {
       text-align: center; font-size: 14px; font-weight: 500;
       margin-top: 12px; min-height: 20px;
     }
-    .status-ok { color: #2e7d32; }
-    .status-err { color: #c62828; }
+    .status-ok { color: #2A6E28; }
+    .status-err { color: #B73A3A; }
+
+    /* --- Divider --- */
+    .form-divider {
+      height: 1px; background: var(--line);
+      margin: 28px 0;
+    }
   </style>
 </head>
 <body>
@@ -199,8 +395,10 @@
       <p>Собирай рецепты у близких</p>
     </div>
     <div class="tabs">
-      <button class="tab-btn active" data-tab="recipes">Рецепты</button>
-      <button class="tab-btn" data-tab="request">Запросить</button>
+      <div class="tabs-inner">
+        <button class="tab-btn active" data-tab="recipes">Рецепты</button>
+        <button class="tab-btn" data-tab="request">Запросить</button>
+      </div>
     </div>
 
     <!-- Tab: Recipes -->
@@ -217,10 +415,9 @@
       <input type="text" id="req-title" placeholder="Например: Борщ">
       <button class="btn" id="create-link">Создать ссылку</button>
       <div id="link-result"></div>
-      <div style="margin-top:24px">
-        <label style="margin-bottom:12px">История запросов</label>
-        <div id="request-list"></div>
-      </div>
+      <div class="form-divider"></div>
+      <div class="request-section-title">История запросов</div>
+      <div id="request-list"></div>
     </div>
   </div>
 
@@ -248,10 +445,23 @@
       return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     }
 
+    // ========== Author color mapping ==========
+    const authorColors = {
+      'Мама': { var: 'var(--mom)', bg: 'rgba(217,90,99,.1)', text: '#B5404A' },
+      'Папа': { var: 'var(--dad)', bg: 'rgba(46,111,216,.1)', text: '#1E56A8' },
+      'Брат': { var: 'var(--bro)', bg: 'rgba(61,155,99,.1)', text: '#2C7A4C' },
+      'Сестра': { var: 'var(--sis)', bg: 'rgba(214,168,0,.1)', text: '#9A7800' },
+    };
+    const defaultAuthor = { var: 'var(--muted)', bg: 'rgba(116,110,99,.08)', text: '#5A554B' };
+
+    function getAuthor(sender) {
+      return authorColors[sender] || defaultAuthor;
+    }
+
     // ========== Recipe parser ==========
     function parseRecipe(text) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      if (lines.length === 0) return '<p style="color:#8e8e93">Пусто</p>';
+      if (lines.length === 0) return '<p style="color:var(--muted)">Пусто</p>';
 
       const unitPattern = /\d+\s*(г|гр|кг|мл|л|шт|ст\.?\s*л|ч\.?\s*л|стакан|щепот|пучок|зубч|долек|долька|банк|пачк|упаковк)/i;
       const tastePattern = /по вкусу|на глаз/i;
@@ -278,7 +488,7 @@
         for (const step of steps) html += `<li>${esc(step)}</li>`;
         html += '</ol>';
       }
-      return html || '<p style="color:#8e8e93">Не удалось разобрать</p>';
+      return html || '<p style="color:var(--muted)">Не удалось разобрать</p>';
     }
 
     // ========== Reply flow (?r=token) ==========
@@ -427,12 +637,15 @@
         }
 
         recipeListEl.innerHTML = recipes.map(r => {
-          const date = r.created_at ? `<span style="font-size:12px;color:#8e8e93">${formatDate(r.created_at)}</span>` : '';
+          const a = getAuthor(r.sender);
+          const date = r.created_at ? `<span class="recipe-card-date">${formatDate(r.created_at)}</span>` : '';
           return `
-          <div class="recipe-card" data-id="${esc(r.id)}">
+          <div class="recipe-card" style="--author-color:${a.var}" data-id="${esc(r.id)}">
             <div class="recipe-card-title">${esc(r.title)}</div>
-            <div class="recipe-card-author">от ${esc(r.sender)}</div>
-            ${date ? `<div class="recipe-card-meta">${date}</div>` : ''}
+            <div class="recipe-card-meta">
+              <span class="author-chip" style="background:${a.bg};color:${a.text}">от ${esc(r.sender)}</span>
+              ${date}
+            </div>
           </div>`;
         }).join('');
 
@@ -448,10 +661,12 @@
         recipeListEl.style.display = 'none';
         recipeDetailEl.style.display = '';
 
+        const a = getAuthor(recipe.sender);
         recipeDetailEl.innerHTML = `
           <button class="detail-back" id="back-btn">&larr; Назад</button>
           <div class="detail-title">${esc(recipe.title)}</div>
-          <div class="detail-author">от ${esc(recipe.sender)}${recipe.created_at ? ' · ' + formatDate(recipe.created_at) : ''}</div>
+          <div class="detail-author">${recipe.created_at ? formatDate(recipe.created_at) : ''}</div>
+          <span class="detail-author-chip" style="background:${a.bg};color:${a.text}">от ${esc(recipe.sender)}</span>
           <div class="section-label">Оригинал</div>
           <div class="original-block">${esc(recipe.body)}</div>
           <div class="section-label">Структурированная версия</div>
@@ -488,7 +703,7 @@
             <div class="request-item">
               <div class="request-item-title">${esc(r.requested_title)}</div>
               <div class="request-item-info">
-                У кого: ${esc(r.target_person)} · ${formatDate(r.created_at)}
+                <span>У кого: ${esc(r.target_person)} · ${formatDate(r.created_at)}</span>
                 <span class="badge ${statusClass}">${statusText}</span>
               </div>
               <div class="request-item-link" data-link="${esc(link)}">${esc(link)}</div>

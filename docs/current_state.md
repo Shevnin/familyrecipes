@@ -9,7 +9,7 @@
 
 ## Где остановились
 - Текущий roadmap-этап: `R1 - Split Screen Prototype` (`docs/roadmap.md`)
-- Последняя зафиксированная сессия: `docs/sessions/2026-02-25_web_mobile_v1.md`
+- Последняя зафиксированная сессия: `docs/sessions/2026-02-25_editorial_redesign.md`
 
 ## Прототипы
 1. **Split-screen** (старый): `src/index.html` — два телефонных экрана рядом
@@ -24,6 +24,7 @@
 3. **Детали рецепта:** оригинал + структурированная версия (эвристический парсер).
 4. **iOS web-app:** meta для add-to-home-screen, safe-area, mobile-first UI.
 5. **Персистентность:** `recipe_requests` и `recipe_responses` в localStorage.
+6. **Дизайн:** Editorial Premium (Modern Heritage) — Fraunces/Manrope/IBM Plex Sans, тёплая палитра, цветовые коды авторов (Мама/Папа/Брат/Сестра).
 
 ## Что сейчас в приоритете (P0)
 1. Тест web-mobile на реальном телефоне.
