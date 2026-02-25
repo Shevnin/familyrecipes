@@ -240,7 +240,19 @@
       border-radius: var(--radius-card);
       padding: 14px 16px; margin-bottom: 10px;
       box-shadow: var(--shadow-card);
+      position: relative;
     }
+    .request-delete {
+      position: absolute; top: 10px; right: 12px;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none;
+      font-size: 15px; color: var(--muted);
+      cursor: pointer; border-radius: 8px;
+      transition: background var(--transition), color var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .request-delete:active { background: rgba(183,58,58,.1); color: #B73A3A; }
     .request-item-title {
       font-family: var(--font-display);
       font-size: 16px; font-weight: 600;
@@ -704,6 +716,7 @@
           const statusText = r.status === 'fulfilled' ? 'получен' : 'ожидает';
           return `
             <div class="request-item">
+              <button class="request-delete" data-token="${esc(r.token)}">✕</button>
               <div class="request-item-title">${esc(r.requested_title)}</div>
               <div class="request-item-info">
                 <span>У кого: ${esc(r.target_person)} · ${formatDate(r.created_at)}</span>
@@ -712,6 +725,14 @@
               <div class="request-item-link" data-link="${esc(link)}">${esc(link)}</div>
             </div>`;
         }).join('');
+
+        requestListEl.querySelectorAll('.request-delete').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const requests = loadJSON('recipe_requests');
+            saveJSON('recipe_requests', requests.filter(r => r.token !== btn.dataset.token));
+            renderRequestList();
+          });
+        });
 
         requestListEl.querySelectorAll('.request-item-link').forEach(el => {
           el.addEventListener('click', () => {
