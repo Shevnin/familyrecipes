@@ -577,6 +577,9 @@
           btn.classList.add('active');
           document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
           document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+          if (btn.dataset.tab === 'recipes' && recipeDetailEl.style.display !== 'none') {
+            renderRecipeList();
+          }
         });
       });
 
