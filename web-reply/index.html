@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>FamilyRecipes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF7F2;
+      --surface: #FFFFFF;
+      --text: #1A1A1A;
+      --text-secondary: #6B6B6B;
+      --accent: #D95A63;
+      --accent-hover: #C44E56;
+      --success: #3D9B63;
+      --error: #D95A63;
+      --border: #E8E4DE;
+      --radius: 16px;
+      --font-display: 'Fraunces', serif;
+      --font-body: 'Manrope', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    /* --- States --- */
+    .state { display: none; }
+    .state.active { display: flex; flex-direction: column; flex: 1; }
+
+    /* --- Loading --- */
+    #state-loading { align-items: center; justify-content: center; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      margin-top: 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* --- Error states --- */
+    .error-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .error-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .error-text {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* --- Form --- */
+    .form-header {
+      margin-bottom: 24px;
+    }
+    .form-context {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .form-dish {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .field input,
+    .field textarea {
+      width: 100%;
+      font-family: var(--font-body);
+      font-size: 16px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+    }
+    .field textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .submit-btn:hover { background: var(--accent-hover); }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #FEF2F2;
+      color: var(--error);
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .form-error.visible { display: block; }
+
+    /* --- Success --- */
+    .success-card {
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .success-icon {
+      width: 64px; height: 64px;
+      background: #E8F5EC;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .success-text {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo">FamilyRecipes</div>
+
+  <!-- Loading -->
+  <div id="state-loading" class="state active">
+    <div class="spinner"></div>
+    <div class="loading-text">Загружаем...</div>
+  </div>
+
+  <!-- Not found -->
+  <div id="state-not-found" class="state">
+    <div class="card error-card">
+      <div class="error-icon">&#128269;</div>
+      <div class="error-title">Запрос не найден</div>
+      <div class="error-text">Ссылка недействительна. Попросите отправить новую.</div>
+    </div>
+  </div>
+
+  <!-- Expired -->
+  <div id="state-expired" class="state">
+    <div class="card error-card">
+      <div class="error-icon">&#8987;</div>
+      <div class="error-title">Срок истёк</div>
+      <div class="error-text">Запрос больше не активен. Попросите создать новый.</div>
+    </div>
+  </div>
+
+  <!-- Already fulfilled -->
+  <div id="state-fulfilled" class="state">
+    <div class="card error-card">
+      <div class="error-icon">&#9989;</div>
+      <div class="error-title">Рецепт уже отправлен</div>
+      <div class="error-text">По этой ссылке рецепт уже был отправлен ранее.</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div id="state-form" class="state">
+    <div class="card">
+      <div class="form-header">
+        <div class="form-context" id="form-context"></div>
+        <div class="form-dish" id="form-dish"></div>
+      </div>
+
+      <form id="recipe-form" autocomplete="off">
+        <div class="field">
+          <label for="submitted_by_name">Ваше имя</label>
+          <input type="text" id="submitted_by_name" required placeholder="Как вас зовут?">
+        </div>
+        <div class="field">
+          <label for="recipe_title">Название рецепта</label>
+          <input type="text" id="recipe_title" required>
+        </div>
+        <div class="field">
+          <label for="original_text">Рецепт</label>
+          <textarea id="original_text" required
+            placeholder="Напишите рецепт в свободной форме: ингредиенты, шаги, советы..."></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submit-btn">Отправить рецепт</button>
+        <div class="form-error" id="form-error"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="state-success" class="state">
+    <div class="card success-card">
+      <div class="success-icon">&#10003;</div>
+      <div class="success-title">Рецепт отправлен!</div>
+      <div class="success-text" id="success-text">Спасибо! Рецепт уже доступен в приложении.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- Config ---
+  // SUPABASE_FUNCTIONS_URL is set at deploy time.
+  // For GitHub Pages dev, override via query param ?api=...
+  const DEFAULT_API = 'https://wlxtobrxqytnmpifbnev.supabase.co/functions/v1';
+
+  // CAPTCHA: Turnstile widget integration placeholder.
+  // When CAPTCHA_SECRET is set on the backend, submit-request requires captcha_token.
+  // DO NOT set CAPTCHA_SECRET until the Turnstile widget is integrated here.
+  // To integrate: load Turnstile JS, render widget, capture token, include in payload.
+  var CAPTCHA_TOKEN = null; // Will be set by Turnstile callback when integrated
+  const params = new URLSearchParams(location.search);
+  const API_BASE = params.get('api') || DEFAULT_API;
+
+  // --- Extract token ---
+  // Supports /r/<token> (path) and ?token=<token> (query)
+  function getToken() {
+    const pathMatch = location.pathname.match(/\/r\/([a-f0-9-]{36})$/i);
+    if (pathMatch) return pathMatch[1];
+    return params.get('token');
+  }
+
+  const token = getToken();
+
+  // --- State management ---
+  function showState(id) {
+    document.querySelectorAll('.state').forEach(function(el) {
+      el.classList.remove('active');
+    });
+    document.getElementById('state-' + id).classList.add('active');
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('form-error');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  function hideError() {
+    document.getElementById('form-error').classList.remove('visible');
+  }
+
+  // --- Init ---
+  if (!token) {
+    showState('not-found');
+    return;
+  }
+
+  // Fetch request metadata
+  fetch(API_BASE + '/get-request-meta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token })
+  })
+  .then(function(resp) {
+    if (resp.status === 404) {
+      showState('not-found');
+      throw new Error('stop');
+    }
+    return resp.json();
+  })
+  .then(function(data) {
+    if (data.error === 'request_not_found') {
+      showState('not-found');
+      return;
+    }
+    if (data.status === 'expired') {
+      showState('expired');
+      return;
+    }
+    if (data.status === 'fulfilled') {
+      showState('fulfilled');
+      return;
+    }
+    if (data.status === 'cancelled') {
+      showState('expired');
+      return;
+    }
+
+    // Show form
+    document.getElementById('form-context').textContent =
+      data.recipient_name + ', вас просят поделиться рецептом:';
+    document.getElementById('form-dish').textContent = data.dish_name;
+    document.getElementById('submitted_by_name').value = data.recipient_name;
+    document.getElementById('recipe_title').value = data.dish_name;
+    showState('form');
+  })
+  .catch(function(err) {
+    if (err.message === 'stop') return;
+    showState('not-found');
+  });
+
+  // --- Form submit ---
+  document.getElementById('recipe-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    hideError();
+
+    var btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Отправляем...';
+
+    var payload = {
+      token: token,
+      submitted_by_name: document.getElementById('submitted_by_name').value.trim(),
+      recipe_title: document.getElementById('recipe_title').value.trim(),
+      original_text: document.getElementById('original_text').value.trim()
+    };
+    if (CAPTCHA_TOKEN) {
+      payload.captcha_token = CAPTCHA_TOKEN;
+    }
+
+    if (!payload.submitted_by_name || !payload.recipe_title || !payload.original_text) {
+      showError('Пожалуйста, заполните все поля.');
+      btn.disabled = false;
+      btn.textContent = 'Отправить рецепт';
+      return;
+    }
+
+    fetch(API_BASE + '/submit-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(resp) {
+      return resp.json().then(function(data) {
+        return { status: resp.status, data: data };
+      });
+    })
+    .then(function(result) {
+      if (result.status === 201) {
+        showState('success');
+        return;
+      }
+      if (result.status === 409) {
+        showState('fulfilled');
+        return;
+      }
+      if (result.status === 410) {
+        showState('expired');
+        return;
+      }
+      if (result.status === 404) {
+        showState('not-found');
+        return;
+      }
+      if (result.data.error === 'captcha_required') {
+        showError('Проверка безопасности не пройдена. Обновите страницу.');
+        btn.disabled = false;
+        btn.textContent = 'Отправить рецепт';
+        return;
+      }
+      showError('Не удалось отправить. Попробуйте ещё раз.');
+      btn.disabled = false;
+      btn.textContent = 'Отправить рецепт';
+    })
+    .catch(function() {
+      showError('Ошибка сети. Проверьте подключение и попробуйте снова.');
+      btn.disabled = false;
+      btn.textContent = 'Отправить рецепт';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
