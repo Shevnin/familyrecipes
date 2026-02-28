@@ -9,6 +9,13 @@ async function sha256(message: string): Promise<string> {
     .join("");
 }
 
+const ERROR_HTTP_MAP: Record<string, number> = {
+  request_not_found: 404,
+  request_already_fulfilled: 409,
+  request_expired: 410,
+  request_not_pending: 410,
+};
+
 Deno.serve(async (req) => {
   const corsResp = handleCors(req);
   if (corsResp) return corsResp;
@@ -58,94 +65,35 @@ Deno.serve(async (req) => {
     const tokenHash = await sha256(token);
     const serviceClient = createServiceClient();
 
-    // --- Find request by token hash ---
-    const { data: request, error: findError } = await serviceClient
-      .from("recipe_requests")
-      .select("id, household_id, status, expires_at")
-      .eq("token_hash", tokenHash)
-      .single();
+    const { data, error } = await serviceClient.rpc("submit_recipe_by_token", {
+      p_token_hash: tokenHash,
+      p_submitted_by_name: submitted_by_name,
+      p_recipe_title: recipe_title,
+      p_original_text: original_text,
+    });
 
-    if (findError || !request) {
-      return new Response(
-        JSON.stringify({ error: "request_not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (request.status === "fulfilled") {
-      return new Response(
-        JSON.stringify({ error: "request_already_fulfilled" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (request.status !== "pending") {
-      return new Response(
-        JSON.stringify({ error: "request_not_pending" }),
-        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (new Date(request.expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ error: "request_expired" }),
-        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // --- Create recipe ---
-    const { data: recipe, error: recipeError } = await serviceClient
-      .from("recipes")
-      .insert({
-        household_id: request.household_id,
-        title: recipe_title,
-        author_name: submitted_by_name,
-        original_text,
-      })
-      .select("id")
-      .single();
-
-    if (recipeError || !recipe) {
-      console.error("submit-request: recipe insert failed:", recipeError?.message);
+    if (error) {
+      const pgError = error.message ?? "";
+      for (const [code, status] of Object.entries(ERROR_HTTP_MAP)) {
+        if (pgError.includes(code)) {
+          return new Response(
+            JSON.stringify({ error: code }),
+            { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+      console.error("submit-request rpc failed:", pgError);
       return new Response(
         JSON.stringify({ error: "submit_failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-
-    // --- Create submission record ---
-    const { data: submission, error: subError } = await serviceClient
-      .from("recipe_submissions")
-      .insert({
-        request_id: request.id,
-        household_id: request.household_id,
-        submitted_by_name,
-        recipe_title,
-        original_text,
-        created_recipe_id: recipe.id,
-      })
-      .select("id")
-      .single();
-
-    if (subError || !submission) {
-      console.error("submit-request: submission insert failed:", subError?.message);
-      return new Response(
-        JSON.stringify({ error: "submit_failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // --- Mark request as fulfilled ---
-    await serviceClient
-      .from("recipe_requests")
-      .update({ status: "fulfilled", fulfilled_at: new Date().toISOString() })
-      .eq("id", request.id);
 
     return new Response(
       JSON.stringify({
         success: true,
-        recipe_id: recipe.id,
-        submission_id: submission.id,
+        recipe_id: data.recipe_id,
+        submission_id: data.submission_id,
       }),
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

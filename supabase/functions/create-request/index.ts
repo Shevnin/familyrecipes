@@ -16,13 +16,7 @@ Deno.serve(async (req) => {
   try {
     // --- Auth check ---
     const authHeader = req.headers.get("Authorization");
-    const hasAuth = !!authHeader;
-    const startsBearer = authHeader?.startsWith("Bearer ") ?? false;
-    const tokenStr = startsBearer ? authHeader!.slice(7) : "";
-    console.log(`[AUTH-DIAG] hasAuth=${hasAuth} startsBearer=${startsBearer} tokenLen=${tokenStr.length}`);
-
     if (!authHeader) {
-      console.log("[AUTH-DIAG] REJECT: no Authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -31,12 +25,10 @@ Deno.serve(async (req) => {
 
     const userClient = createUserClient(authHeader);
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    console.log(`[AUTH-DIAG] getUser result: userId=${user?.id ?? "null"} error=${authError?.message ?? "none"}`);
-
     if (authError || !user) {
-      console.log(`[AUTH-DIAG] REJECT: authError=${authError?.message} user=${user ? "exists" : "null"}`);
+      console.error(`create-request auth failed: ${authError?.message ?? "no user"}`);
       return new Response(
-        JSON.stringify({ error: "Invalid or expired token", detail: authError?.message }),
+        JSON.stringify({ error: "Invalid or expired token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -129,10 +121,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // URL contract:
+    //   APP_BASE_URL = site root, e.g. https://shevnin.github.io/familyrecipes
+    //   APP_LINK_MODE = "query" → /web-reply/?token=<token>  (GitHub Pages, no rewrites)
+    //   APP_LINK_MODE = "path"  → /r/<token>                 (Cloudflare/Vercel with rewrites)
     const baseUrl = (Deno.env.get("APP_BASE_URL") || "https://familyrecipes.app").replace(/\/$/, "");
     const linkMode = Deno.env.get("APP_LINK_MODE") || "path";
     const webUrl = linkMode === "query"
-      ? `${baseUrl}/?token=${token}`
+      ? `${baseUrl}/web-reply/?token=${token}`
       : `${baseUrl}/r/${token}`;
     const shareText =
       `${recipient_name}, поделитесь рецептом "${dish_name}"!\n${webUrl}`;
