@@ -23,11 +23,13 @@ struct RecipesView: View {
                     ContentUnavailableView {
                         Label("Пока пусто", systemImage: "book")
                     } description: {
-                        Text("Здесь появятся рецепты, когда кто-то ответит на ваш запрос.")
+                        Text("Здесь появятся рецепты, когда кто-то ответит на ваш запрос.\nОтправьте запрос на вкладке «Запросить».")
                     }
                 } else {
                     List(viewModel.recipes) { recipe in
-                        recipeRow(recipe)
+                        NavigationLink(value: recipe) {
+                            recipeRow(recipe)
+                        }
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -36,6 +38,9 @@ struct RecipesView: View {
                 }
             }
             .navigationTitle("Рецепты")
+            .navigationDestination(for: Recipe.self) { recipe in
+                RecipeDetailView(recipe: recipe)
+            }
             .task {
                 if viewModel.recipes.isEmpty {
                     await viewModel.loadRecipes()

@@ -1,14 +1,16 @@
 import Foundation
 
-struct Recipe: Decodable, Identifiable {
+struct Recipe: Decodable, Identifiable, Hashable {
     let id: String
     let title: String
     let authorName: String
+    let originalText: String?
     let createdAt: String
 
     enum CodingKeys: String, CodingKey {
         case id, title
         case authorName = "author_name"
+        case originalText = "original_text"
         case createdAt = "created_at"
     }
 

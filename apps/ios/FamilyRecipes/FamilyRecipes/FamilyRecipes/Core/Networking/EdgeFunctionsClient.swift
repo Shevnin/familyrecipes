@@ -37,11 +37,24 @@ struct EdgeFunctionsClient {
     }
 
     func fetchRecipes() async throws -> [Recipe] {
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+        }
+
+        do {
+            return try await performFetchRecipes()
+        } catch NetworkError.httpError(let code, _) where code == 401 {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+            return try await performFetchRecipes()
+        }
+    }
+
+    private func performFetchRecipes() async throws -> [Recipe] {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
 
-        let url = "\(restURL)/recipes?select=id,title,author_name,created_at&order=created_at.desc"
+        let url = "\(restURL)/recipes?select=id,title,author_name,original_text,created_at&order=created_at.desc"
         return try await HTTPClient.shared.request(
             url: url,
             method: .get,
