@@ -65,6 +65,106 @@ struct EdgeFunctionsClient {
         )
     }
 
+    // MARK: - Request History
+
+    func fetchRequestHistory() async throws -> [RecipeRequest] {
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+        }
+
+        do {
+            return try await performFetchRequestHistory()
+        } catch NetworkError.httpError(let code, _) where code == 401 {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+            return try await performFetchRequestHistory()
+        }
+    }
+
+    private func performFetchRequestHistory() async throws -> [RecipeRequest] {
+        guard let token = await SupabaseAuthClient.shared.accessToken else {
+            throw NetworkError.httpError(statusCode: 401, body: Data())
+        }
+
+        let url = "\(restURL)/recipe_requests?select=id,recipient_name,dish_name,status,created_at&order=created_at.desc"
+        return try await HTTPClient.shared.request(
+            url: url,
+            method: .get,
+            headers: [
+                "Authorization": "Bearer \(token)",
+                "apikey": AppConfig.supabaseAnonKey
+            ]
+        )
+    }
+
+    // MARK: - Create Recipe
+
+    func createRecipe(title: String, originalText: String) async throws {
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+        }
+
+        do {
+            try await performCreateRecipe(title: title, originalText: originalText)
+        } catch NetworkError.httpError(let code, _) where code == 401 {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+            try await performCreateRecipe(title: title, originalText: originalText)
+        }
+    }
+
+    private func performCreateRecipe(title: String, originalText: String) async throws {
+        guard let token = await SupabaseAuthClient.shared.accessToken else {
+            throw NetworkError.httpError(statusCode: 401, body: Data())
+        }
+
+        let headers = [
+            "Authorization": "Bearer \(token)",
+            "apikey": AppConfig.supabaseAnonKey,
+            "Prefer": "return=minimal"
+        ]
+
+        struct MemberRow: Decodable { let householdId: String
+            enum CodingKeys: String, CodingKey { case householdId = "household_id" }
+        }
+        let members: [MemberRow] = try await HTTPClient.shared.request(
+            url: "\(restURL)/household_members?select=household_id&limit=1",
+            method: .get,
+            headers: [
+                "Authorization": "Bearer \(token)",
+                "apikey": AppConfig.supabaseAnonKey
+            ]
+        )
+        guard let householdId = members.first?.householdId else {
+            throw NetworkError.httpError(statusCode: 400, body: Data())
+        }
+
+        struct CreateRecipeBody: Encodable {
+            let householdId: String
+            let title: String
+            let originalText: String
+            let authorName: String
+            enum CodingKeys: String, CodingKey {
+                case householdId = "household_id"
+                case title
+                case originalText = "original_text"
+                case authorName = "author_name"
+            }
+        }
+
+        try await HTTPClient.shared.requestNoContent(
+            url: "\(restURL)/recipes",
+            method: .post,
+            headers: headers,
+            body: CreateRecipeBody(
+                householdId: householdId,
+                title: title,
+                originalText: originalText,
+                authorName: "Я"
+            )
+        )
+    }
+
+    // MARK: - Household
+
     func ensureHousehold() async throws {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
             throw NetworkError.httpError(statusCode: 401, body: Data())

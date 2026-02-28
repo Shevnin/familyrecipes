@@ -4,29 +4,82 @@ import UIKit
 import SwiftUI
 
 struct CreateRequestView: View {
+    var requestDraft: RequestDraft
     @State private var viewModel = CreateRequestViewModel()
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    if let result = viewModel.result {
-                        successSection(result)
-                    } else {
-                        formSection
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        if let result = viewModel.result {
+                            successSection(result, proxy: proxy)
+                        } else {
+                            if !viewModel.chipNames.isEmpty {
+                                chipsSection
+                            }
+                            formSection
+                        }
+
+                        RequestHistorySection(
+                            requests: viewModel.history,
+                            isLoading: viewModel.isHistoryLoading,
+                            errorMessage: viewModel.historyError,
+                            onRetry: { await viewModel.loadHistory() },
+                            onShare: { viewModel.shareRequest($0) },
+                            canShare: { viewModel.canShareRequest($0) }
+                        )
+                        .id("history")
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 24)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
             }
             .navigationTitle("Запросить рецепт")
             .sheet(isPresented: $viewModel.showShareSheet) {
-                if let result = viewModel.result {
-                    ShareSheet(text: result.shareText)
+                if let text = viewModel.activeShareText {
+                    ShareSheet(text: text)
+                }
+            }
+            .task {
+                await viewModel.loadHistory()
+            }
+            .onChange(of: requestDraft.hasDraft) { _, hasDraft in
+                if hasDraft {
+                    let draft = requestDraft.consume()
+                    viewModel.recipientName = draft.recipient
+                    viewModel.dishName = draft.dish
+                    viewModel.result = nil
                 }
             }
         }
     }
+
+    // MARK: - Chips
+
+    private var chipsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Уже просили у…")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(viewModel.chipNames, id: \.self) { name in
+                        ChipView(
+                            text: name,
+                            isSelected: viewModel.recipientName.lowercased() == name.lowercased()
+                        ) {
+                            viewModel.recipientName = name
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Form
 
     private var formSection: some View {
         VStack(spacing: 16) {
@@ -76,7 +129,9 @@ struct CreateRequestView: View {
         }
     }
 
-    private func successSection(_ result: CreateRequestResponse) -> some View {
+    // MARK: - Success
+
+    private func successSection(_ result: CreateRequestResponse, proxy: ScrollViewProxy) -> some View {
         VStack(spacing: 20) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 48))
@@ -85,22 +140,49 @@ struct CreateRequestView: View {
             Text("Запрос создан!")
                 .font(.title2.bold())
 
-            Text("Ссылка отправлена через Share Sheet. Также можете скопировать её ниже.")
+            Text("Отправьте ссылку получателю — он заполнит рецепт через форму.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             linkCard(result.webURL)
 
-            HStack(spacing: 12) {
+            VStack(spacing: 12) {
+                Text("Что дальше?")
+                    .font(.headline)
+
                 Button {
                     viewModel.showShareSheet = true
                 } label: {
-                    Label("Поделиться", systemImage: "square.and.arrow.up")
+                    Label("Поделиться ссылкой", systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+
+                HStack(spacing: 12) {
+                    #if canImport(UIKit)
+                    Button {
+                        UIPasteboard.general.string = result.webURL
+                    } label: {
+                        Label("Копировать", systemImage: "doc.on.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    #endif
+
+                    Button {
+                        withAnimation {
+                            proxy.scrollTo("history", anchor: .top)
+                        }
+                    } label: {
+                        Label("История", systemImage: "list.bullet")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
 
                 Button {
                     viewModel.reset()
@@ -113,6 +195,8 @@ struct CreateRequestView: View {
             }
         }
     }
+
+    // MARK: - Link Card
 
     private func linkCard(_ url: String) -> some View {
         HStack {
@@ -138,6 +222,8 @@ struct CreateRequestView: View {
     }
 }
 
+// MARK: - Share Sheet
+
 #if canImport(UIKit)
 struct ShareSheet: UIViewControllerRepresentable {
     let text: String
@@ -149,3 +235,4 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 #endif
+

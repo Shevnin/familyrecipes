@@ -1,7 +1,10 @@
 import SwiftUI
 
 struct RecipesView: View {
+    var requestDraft: RequestDraft
+    @Binding var selectedTab: Int
     @State private var viewModel = RecipesViewModel()
+    @State private var showingCreateSheet = false
 
     var body: some View {
         NavigationStack {
@@ -38,8 +41,24 @@ struct RecipesView: View {
                 }
             }
             .navigationTitle("Рецепты")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingCreateSheet = true } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
             .navigationDestination(for: Recipe.self) { recipe in
-                RecipeDetailView(recipe: recipe)
+                RecipeDetailView(
+                    recipe: recipe,
+                    requestDraft: requestDraft,
+                    selectedTab: $selectedTab
+                )
+            }
+            .sheet(isPresented: $showingCreateSheet) {
+                CreateRecipeView {
+                    Task { await viewModel.loadRecipes() }
+                }
             }
             .task {
                 if viewModel.recipes.isEmpty {
@@ -51,8 +70,16 @@ struct RecipesView: View {
 
     private func recipeRow(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(recipe.title)
-                .font(.headline)
+            HStack {
+                Text(recipe.title)
+                    .font(.headline)
+
+                if NotesStore.shared.hasNote(for: recipe.id) {
+                    Image(systemName: "note.text")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             HStack {
                 if !recipe.authorName.isEmpty {
