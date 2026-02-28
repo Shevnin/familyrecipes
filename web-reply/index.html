@@ -298,12 +298,10 @@
   // SUPABASE_FUNCTIONS_URL is set at deploy time.
   // For GitHub Pages dev, override via query param ?api=...
   const DEFAULT_API = 'https://wlxtobrxqytnmpifbnev.supabase.co/functions/v1';
+  const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndseHRvYnJ4cXl0bm1waWZibmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjE0MjQsImV4cCI6MjA4Nzc5NzQyNH0.SIDMiCz8Rok0uK8ViYXkRGg-KEQlEojYq0EnCCkRBnY';
 
   // CAPTCHA: Turnstile widget integration placeholder.
-  // When CAPTCHA_SECRET is set on the backend, submit-request requires captcha_token.
-  // DO NOT set CAPTCHA_SECRET until the Turnstile widget is integrated here.
-  // To integrate: load Turnstile JS, render widget, capture token, include in payload.
-  var CAPTCHA_TOKEN = null; // Will be set by Turnstile callback when integrated
+  var CAPTCHA_TOKEN = null;
   const params = new URLSearchParams(location.search);
   const API_BASE = params.get('api') || DEFAULT_API;
 
@@ -343,7 +341,7 @@
   // Fetch request metadata
   fetch(API_BASE + '/get-request-meta', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY },
     body: JSON.stringify({ token: token })
   })
   .then(function(resp) {
@@ -412,7 +410,7 @@
 
     fetch(API_BASE + '/submit-request', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY },
       body: JSON.stringify(payload)
     })
     .then(function(resp) {
