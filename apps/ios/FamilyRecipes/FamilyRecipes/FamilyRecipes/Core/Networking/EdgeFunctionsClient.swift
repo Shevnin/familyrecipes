@@ -6,41 +6,23 @@ struct EdgeFunctionsClient {
     private let restURL = AppConfig.supabaseURL + "/rest/v1"
 
     func createRequest(input: CreateRequestInput) async throws -> CreateRequestResponse {
-        // Pre-flight: ensure token is fresh before sending
-        let preToken = await SupabaseAuthClient.shared.accessToken
-        let preInfo = Self.jwtDebugInfo(preToken)
-        print("[CR-DEBUG] pre-flight tokenExists=\(preInfo.exists) exp=\(preInfo.exp) isExpired=\(preInfo.isExpired) masked=\(preInfo.masked)")
-
-        if preInfo.isExpired {
-            print("[CR-DEBUG] token expired/near-expiry, refreshing before request")
-            let oldMasked = preInfo.masked
+        // Pre-flight: refresh token if expired or near-expiry (<60s)
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
             _ = try await SupabaseAuthClient.shared.refreshSession()
-            let newToken = await SupabaseAuthClient.shared.accessToken
-            let newMasked = String((newToken ?? "").prefix(12))
-            print("[CR-DEBUG] refresh done oldMasked=\(oldMasked) newMasked=\(newMasked) changed=\(oldMasked != newMasked)")
         }
 
         do {
             return try await performCreateRequest(input: input)
-        } catch NetworkError.httpError(let code, let body) where code == 401 {
-            let bodyStr = String(data: body, encoding: .utf8) ?? "<non-utf8>"
-            print("[CR-DEBUG] got 401, body=\(bodyStr). Refreshing and retrying…")
-            let oldToken = await SupabaseAuthClient.shared.accessToken
+        } catch NetworkError.httpError(let code, _) where code == 401 {
             _ = try await SupabaseAuthClient.shared.refreshSession()
-            let newToken = await SupabaseAuthClient.shared.accessToken
-            print("[CR-DEBUG] retry refresh done changed=\(oldToken?.prefix(12) != newToken?.prefix(12))")
             return try await performCreateRequest(input: input)
         }
     }
 
     private func performCreateRequest(input: CreateRequestInput) async throws -> CreateRequestResponse {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
-            print("[CR-DEBUG] performCreateRequest: no access token")
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
-
-        let info = Self.jwtDebugInfo(token)
-        print("[CR-DEBUG] sending request masked=\(info.masked) exp=\(info.exp) isExpired=\(info.isExpired)")
 
         let url = "\(functionsURL)/create-request"
         return try await HTTPClient.shared.request(
@@ -85,33 +67,17 @@ struct EdgeFunctionsClient {
         )
     }
 
-    // MARK: - JWT Debug Helper
+    // MARK: - JWT Expiry Check
 
-    private struct JWTDebugInfo {
-        let exists: Bool
-        let exp: String
-        let isExpired: Bool
-        let masked: String
-    }
-
-    private static func jwtDebugInfo(_ token: String?) -> JWTDebugInfo {
-        guard let token, !token.isEmpty else {
-            return JWTDebugInfo(exists: false, exp: "n/a", isExpired: true, masked: "nil")
-        }
-
-        let masked = String(token.prefix(12))
+    private static func isTokenExpired(_ token: String) -> Bool {
         let parts = token.split(separator: ".")
         guard parts.count >= 2,
               let payloadData = base64URLDecode(String(parts[1])),
               let json = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
-              let expValue = json["exp"] as? TimeInterval else {
-            return JWTDebugInfo(exists: true, exp: "parse-error", isExpired: true, masked: masked)
+              let exp = json["exp"] as? TimeInterval else {
+            return true
         }
-
-        let expDate = Date(timeIntervalSince1970: expValue)
-        let remainingSec = expDate.timeIntervalSinceNow
-        let expStr = "\(Int(expValue)) (in \(Int(remainingSec))s)"
-        return JWTDebugInfo(exists: true, exp: expStr, isExpired: remainingSec < 60, masked: masked)
+        return Date(timeIntervalSince1970: exp).timeIntervalSinceNow < 60
     }
 
     private static func base64URLDecode(_ string: String) -> Data? {

@@ -8,20 +8,21 @@ actor SupabaseAuthClient {
 
     private var currentSession: AuthTokenResponse?
 
-    private let defaults = UserDefaults.standard
-    private let accessTokenKey = "fr_access_token"
-    private let refreshTokenKey = "fr_refresh_token"
-
     private init() {
-        // Restore tokens from previous session
-        if let access = defaults.string(forKey: accessTokenKey),
-           let refresh = defaults.string(forKey: refreshTokenKey) {
+        if let access = KeychainStore.read(.accessToken),
+           let refresh = KeychainStore.read(.refreshToken) {
             self.currentSession = AuthTokenResponse(
                 accessToken: access,
                 refreshToken: refresh,
                 expiresIn: 0,
                 user: AuthUser(id: "", email: nil)
             )
+        }
+        // One-time migration: clear legacy UserDefaults tokens
+        let defaults = UserDefaults.standard
+        if defaults.string(forKey: "fr_access_token") != nil {
+            defaults.removeObject(forKey: "fr_access_token")
+            defaults.removeObject(forKey: "fr_refresh_token")
         }
     }
 
@@ -51,12 +52,8 @@ actor SupabaseAuthClient {
 
     func refreshSession() async throws -> AuthTokenResponse {
         guard let refresh = currentSession?.refreshToken else {
-            print("[AUTH-DEBUG] refreshSession: no refresh token stored")
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
-
-        let oldAccess = currentSession?.accessToken ?? ""
-        print("[AUTH-DEBUG] refreshSession start oldAccessMasked=\(oldAccess.prefix(12))")
 
         let url = "\(baseURL)/auth/v1/token?grant_type=refresh_token"
         let body = ["refresh_token": refresh]
@@ -68,9 +65,6 @@ actor SupabaseAuthClient {
             body: body
         )
 
-        let changed = oldAccess.prefix(12) != response.accessToken.prefix(12)
-        print("[AUTH-DEBUG] refreshSession done newAccessMasked=\(response.accessToken.prefix(12)) tokenChanged=\(changed)")
-
         currentSession = response
         persistTokens(access: response.accessToken, refresh: response.refreshToken)
         return response
@@ -78,12 +72,11 @@ actor SupabaseAuthClient {
 
     func signOut() {
         currentSession = nil
-        defaults.removeObject(forKey: accessTokenKey)
-        defaults.removeObject(forKey: refreshTokenKey)
+        KeychainStore.deleteAll()
     }
 
     private func persistTokens(access: String, refresh: String) {
-        defaults.set(access, forKey: accessTokenKey)
-        defaults.set(refresh, forKey: refreshTokenKey)
+        KeychainStore.save(access, for: .accessToken)
+        KeychainStore.save(refresh, for: .refreshToken)
     }
 }

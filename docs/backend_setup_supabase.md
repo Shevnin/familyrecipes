@@ -216,9 +216,11 @@ curl -X POST "$PROJECT_URL/rest/v1/household_members" \
 ```bash
 TOKEN_VAL="<token-from-create-request>"
 curl -s -X POST "$FUNCTIONS_URL/submit-request" \
+  -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d "{\"token\":\"$TOKEN_VAL\",\"submitted_by_name\":\"A\",\"recipe_title\":\"R1\",\"original_text\":\"t1\"}" &
 curl -s -X POST "$FUNCTIONS_URL/submit-request" \
+  -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d "{\"token\":\"$TOKEN_VAL\",\"submitted_by_name\":\"B\",\"recipe_title\":\"R2\",\"original_text\":\"t2\"}" &
 wait
@@ -247,6 +249,7 @@ curl -s -X POST "$PROJECT_URL/rest/v1/rpc/submit_recipe_by_token" \
 ```bash
 # Trigger a server error and verify no internal details leak
 curl -s -X POST "$FUNCTIONS_URL/submit-request" \
+  -H "apikey: $ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{"token":"nonexistent","submitted_by_name":"X","recipe_title":"T","original_text":"T"}'
 # Ожидаем: 404 {"error":"request_not_found"} — no "details" field
@@ -258,6 +261,7 @@ curl -s -X POST "$FUNCTIONS_URL/submit-request" \
    ```bash
    RESULT=$(curl -s -X POST "$FUNCTIONS_URL/create-request" \
      -H "Authorization: Bearer $TOKEN" \
+     -H "apikey: $ANON_KEY" \
      -H "Content-Type: application/json" \
      -d '{"recipient_name":"Мама","dish_name":"Пельмени"}')
    echo "$RESULT" | jq -r '.share_text'
