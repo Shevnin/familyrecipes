@@ -16,7 +16,13 @@ Deno.serve(async (req) => {
   try {
     // --- Auth check ---
     const authHeader = req.headers.get("Authorization");
+    const hasAuth = !!authHeader;
+    const startsBearer = authHeader?.startsWith("Bearer ") ?? false;
+    const tokenStr = startsBearer ? authHeader!.slice(7) : "";
+    console.log(`[AUTH-DIAG] hasAuth=${hasAuth} startsBearer=${startsBearer} tokenLen=${tokenStr.length}`);
+
     if (!authHeader) {
+      console.log("[AUTH-DIAG] REJECT: no Authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -25,9 +31,12 @@ Deno.serve(async (req) => {
 
     const userClient = createUserClient(authHeader);
     const { data: { user }, error: authError } = await userClient.auth.getUser();
+    console.log(`[AUTH-DIAG] getUser result: userId=${user?.id ?? "null"} error=${authError?.message ?? "none"}`);
+
     if (authError || !user) {
+      console.log(`[AUTH-DIAG] REJECT: authError=${authError?.message} user=${user ? "exists" : "null"}`);
       return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
+        JSON.stringify({ error: "Invalid or expired token", detail: authError?.message }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
