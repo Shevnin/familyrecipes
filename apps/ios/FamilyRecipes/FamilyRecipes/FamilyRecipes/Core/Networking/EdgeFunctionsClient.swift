@@ -36,6 +36,22 @@ struct EdgeFunctionsClient {
         )
     }
 
+    func fetchRecipes() async throws -> [Recipe] {
+        guard let token = await SupabaseAuthClient.shared.accessToken else {
+            throw NetworkError.httpError(statusCode: 401, body: Data())
+        }
+
+        let url = "\(restURL)/recipes?select=id,title,author_name,created_at&order=created_at.desc"
+        return try await HTTPClient.shared.request(
+            url: url,
+            method: .get,
+            headers: [
+                "Authorization": "Bearer \(token)",
+                "apikey": AppConfig.supabaseAnonKey
+            ]
+        )
+    }
+
     func ensureHousehold() async throws {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
             throw NetworkError.httpError(statusCode: 401, body: Data())
