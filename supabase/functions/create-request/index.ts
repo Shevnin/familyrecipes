@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     const baseUrl = (Deno.env.get("APP_BASE_URL") || "https://familyrecipes.app").replace(/\/$/, "");
     const linkMode = Deno.env.get("APP_LINK_MODE") || "path";
     const webUrl = linkMode === "query"
-      ? `${baseUrl}/web-reply/?token=${token}`
+      ? `${baseUrl}/?token=${token}`
       : `${baseUrl}/r/${token}`;
     const shareText =
       `${recipient_name}, поделитесь рецептом "${dish_name}"!\n${webUrl}`;
