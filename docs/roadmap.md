@@ -72,14 +72,16 @@
 - [todo] Full E2E on real devices (iOS + Android + web-reply).
 - [done] Unified recipe card model (BE-SPEC-04, BE-IMPL-04, LIST-01/02, REQ-09, DETAIL-10, CARD-DELETE-01):
   - backend: migration 00005, VIEW `family_recipe_cards`, Edge Function update
-  - iOS: one combined list, statuses, hidden dates, recipe_story field, delete with confirmation
+  - iOS: one combined list, statuses, hidden dates, delete with confirmation
+  - `recipe_story` field in DB schema — **filled by donor on web-reply**, shown read-only on detail
+  - migration 00006: `submit_recipe_by_token` accepts `p_recipe_story` from donor
   - Android parity notes prepared
-- [todo] Request flow simplification pack:
-  - remove `recipe_story` field from primary request UI
+- [done] Request flow simplification pack (REQ-10...REQ-18):
+  - `recipe_story` removed from chef request UI (it's a donor field)
   - editable dropdown for `Кому отправить?`
-  - rename `Какой рецепт?` -> `Название рецепта`
+  - rename `Какой рецепт?` → `Название рецепта`
   - primary CTA `Получить ссылку`
-  - inline link result + `Копировать` + explanation + `Сформировать новый запрос`
+  - inline link result + `Копировать` (micro-feedback) + explanation + `Сформировать новый запрос`
 - [todo] Donor conversion pack after Android parity:
   - `DONOR-01` share text v2
   - `DONOR-02` onboarding block

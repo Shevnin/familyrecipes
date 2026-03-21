@@ -51,7 +51,6 @@ final class CreateRequestViewModel {
         let input = CreateRequestInput(
             recipientName: recipientName.trimmingCharacters(in: .whitespaces),
             dishName: dishName.trimmingCharacters(in: .whitespaces),
-            recipeStory: nil,
             parentRecipeId: parentRecipeId
         )
 

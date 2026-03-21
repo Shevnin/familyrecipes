@@ -15,7 +15,7 @@
 - IOS-01...IOS-08 все реализованы.
 - **Unified card model реализован** (BE-SPEC-04, BE-IMPL-04, LIST-01, LIST-02, REQ-09, DETAIL-10, CARD-DELETE-01):
   - Backend: миграция `00005_unified_card_model.sql` (recipe_story, hidden_at, parent_recipe_id, VIEW `family_recipe_cards`).
-  - Edge Function `create-request` обновлена: принимает `recipe_story` и `parent_recipe_id`.
+  - Edge Function `create-request` обновлена: принимает `parent_recipe_id`. (`recipe_story` удалён из create-request — это поле донора.)
   - iOS: единый список карточек (pending + received), статусные бейджи, скрытые даты, блок `история рецепта` в detail, удаление карточки с подтверждением.
 - **Request flow simplification (REQ-10...REQ-18) реализован**:
   - убрали `история рецепта` из primary request UI повара;
@@ -59,7 +59,7 @@
   - `00006_submit_recipe_story.sql` — RPC `submit_recipe_by_token` расширен: принимает `p_recipe_story`, записывает в `recipes.recipe_story`.
 - Edge Functions (deploy с `--no-verify-jwt`):
   - `create-request` (auth) — `token`, `web_url`, `share_text`. Принимает опциональный `parent_recipe_id`.
-  - `get-request-meta` (public) — статус запроса по токену. Возвращает `recipe_story` если оно заполнено (на будущее; сейчас повар его не передаёт).
+  - `get-request-meta` (public) — статус запроса по токену. Колонка `recipe_story` в SELECT осталась, но на практике всегда null (повар не заполняет).
   - `submit-request` (public) — атомарный submit через SQL RPC. Принимает `original_text` (обязательный) и `recipe_story` (опциональный) **от донора** → записывает в `recipes`.
 - Link contract:
   - `APP_BASE_URL=https://shevnin.github.io/familyrecipes`

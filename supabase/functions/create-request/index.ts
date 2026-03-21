@@ -38,7 +38,6 @@ Deno.serve(async (req) => {
     const {
       recipient_name,
       dish_name,
-      recipe_story = null,
       parent_recipe_id = null,
       expires_in_days = 7,
       household_id,
@@ -115,7 +114,7 @@ Deno.serve(async (req) => {
       status: "pending",
       expires_at: expiresAt,
     };
-    if (recipe_story) insertPayload.recipe_story = recipe_story;
+    // recipe_story is filled by the donor on web-reply, not by the chef.
     if (parent_recipe_id) insertPayload.parent_recipe_id = parent_recipe_id;
 
     const { data: request, error: insertError } = await serviceClient
