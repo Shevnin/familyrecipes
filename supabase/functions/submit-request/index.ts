@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { token, submitted_by_name, recipe_title, original_text, captcha_token } = body;
+    const { token, submitted_by_name, recipe_title, original_text, recipe_story, captcha_token } = body;
 
     if (!token || !submitted_by_name || !recipe_title || !original_text) {
       return new Response(
@@ -65,12 +65,17 @@ Deno.serve(async (req) => {
     const tokenHash = await sha256(token);
     const serviceClient = createServiceClient();
 
-    const { data, error } = await serviceClient.rpc("submit_recipe_by_token", {
+    const rpcParams: Record<string, unknown> = {
       p_token_hash: tokenHash,
       p_submitted_by_name: submitted_by_name,
       p_recipe_title: recipe_title,
       p_original_text: original_text,
-    });
+    };
+    if (recipe_story) {
+      rpcParams.p_recipe_story = recipe_story;
+    }
+
+    const { data, error } = await serviceClient.rpc("submit_recipe_by_token", rpcParams);
 
     if (error) {
       const pgError = error.message ?? "";
