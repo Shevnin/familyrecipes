@@ -26,11 +26,13 @@
   - кнопка `Копировать` с micro-feedback (haptic + «Скопировано» + checkmark, авто-сброс через 1.2с);
   - под ссылкой: пояснение и кнопка `Сформировать новый запрос`.
 - **Shared RecipesViewModel** — единый source of truth для вкладки «Рецепты» и истории запросов на «Запросить». Delete из одного места убирает карточку отовсюду. Старый `RecipeRequest` model и `fetchRequestHistory` удалены.
-- **recipe_story заполняется донором** на donor page (web-reply):
-  - Миграция `00006_submit_recipe_story.sql` — RPC `submit_recipe_by_token` принимает опциональный `p_recipe_story`, записывает в `recipes.recipe_story`.
-  - Edge Function `submit-request` обновлена: передаёт `recipe_story` в RPC.
-  - Edge Function `get-request-meta` обновлена: возвращает `recipe_story` (если заполнено).
-  - `web-reply/index.html`: поле «История рецепта» (textarea, опциональное) после поля «Рецепт».
+- **`recipe_story` — поле донора, не повара.** Полный flow:
+  1. Повар создаёт запрос в iOS-приложении (без recipe_story).
+  2. Донор открывает ссылку в браузере → видит форму на `web-reply/index.html`.
+  3. Донор заполняет обязательный «Рецепт» (`original_text`) и опциональное «История рецепта» (`recipe_story`) — textarea после рецепта, placeholder: *«Откуда этот рецепт? Кто его готовил, когда и по какому поводу...»*.
+  4. При submit `recipe_story` передаётся в `submit-request` → RPC `submit_recipe_by_token` → записывается в `recipes.recipe_story`.
+  5. Повар видит `recipe_story` на detail screen в iOS (read-only блок «История рецепта»).
+  - Миграция: `00006_submit_recipe_story.sql`.
   - Всё задеплоено и live.
 - Android находится на старте реализации (`ANDROID-01`). Parity notes для unified card model: `docs/sessions/2026-03-21_android_unified_card_parity_notes.md`.
 - Сформирован Donor conversion backlog (`DONOR-01...DONOR-11`), реализация после Android parity.
@@ -39,8 +41,10 @@
 - **Повар** (Master): нативное приложение (iOS/Android), auth через Supabase.
 - **Донор**: zero-install, mobile web по ссылке из мессенджера.
 - **Flow**: Request in app -> link in messenger -> donor web submit -> recipe in app.
-- Текущий donor contract (live): `original_text` + optional `recipe_story`.
-- Целевой donor contract v2 (pending): `recipe_text` + `donor_comment`.
+- **Donor reply contract (live, v1.5)**:
+  - `original_text` (обязательный) — текст рецепта: ингредиенты, шаги, советы.
+  - `recipe_story` (опциональный) — история рецепта: откуда он, кто готовил, семейный контекст. **Заполняется донором** на web-reply page, не поваром. Повар не видит и не вводит это поле — оно появляется только на donor web page как textarea после поля рецепта. Хранится в `recipes.recipe_story`.
+- Целевой donor contract v2 (pending): `recipe_text` + `donor_comment` — ещё не реализован.
 
 ## Backend (Supabase) — DEPLOYED
 - Project ref: `wlxtobrxqytnmpifbnev`
@@ -54,10 +58,9 @@
   - `00005_unified_card_model.sql` — `recipe_story`, `hidden_at`, `parent_recipe_id`, VIEW `family_recipe_cards`, UPDATE RLS policies.
   - `00006_submit_recipe_story.sql` — RPC `submit_recipe_by_token` расширен: принимает `p_recipe_story`, записывает в `recipes.recipe_story`.
 - Edge Functions (deploy с `--no-verify-jwt`):
-  - `create-request` (auth) — `token`, `web_url`, `share_text`. Принимает опциональные `recipe_story` и `parent_recipe_id`.
-  - `get-request-meta` (public) — статус запроса по токену + `recipe_story` (если есть).
-  - `submit-request` (public) — атомарный submit через SQL RPC. Принимает опциональный `recipe_story` от донора.
-- Donor reply contract v1.5: `original_text` + опциональный `recipe_story`. Целевой v2 (`recipe_text` + `donor_comment`) ещё не внедрён.
+  - `create-request` (auth) — `token`, `web_url`, `share_text`. Принимает опциональный `parent_recipe_id`.
+  - `get-request-meta` (public) — статус запроса по токену. Возвращает `recipe_story` если оно заполнено (на будущее; сейчас повар его не передаёт).
+  - `submit-request` (public) — атомарный submit через SQL RPC. Принимает `original_text` (обязательный) и `recipe_story` (опциональный) **от донора** → записывает в `recipes`.
 - Link contract:
   - `APP_BASE_URL=https://shevnin.github.io/familyrecipes`
   - `APP_LINK_MODE=query`
@@ -85,8 +88,8 @@
   - "Попросить уточнить" на карточке рецепта (IOS-07).
   - "Моя семья и друзья" в настройках (IOS-08).
   - App icon добавлен в `Assets.xcassets/AppIcon.appiconset`.
-  - `recipe_story` убран из request flow повара — заполняется донором на web-reply.
-  - Блок `история рецепта` в detail screen (DETAIL-10).
+  - `recipe_story` **не вводится поваром** — это поле донора на web-reply. Повар видит `recipe_story` только на detail screen (read-only), если донор его заполнил.
+  - Блок `история рецепта` в detail screen (DETAIL-10) — показывает `recipe_story`, заполненный донором.
   - Удаление карточки с confirmation dialog (CARD-DELETE-01).
   - Даты скрыты из primary list/detail UI (LIST-02).
   - Shared `RecipesViewModel` как единый source of truth для списка рецептов и истории запросов. Delete из одного места сразу убирает карточку отовсюду. Старый `RecipeRequest` model и `fetchRequestHistory` удалены.
@@ -133,6 +136,7 @@
 - Anti-abuse: optional Turnstile (`CAPTCHA_SECRET`), пока не включен в prod
 - Error hygiene: API не возвращает internal details клиенту
 - Contacts/chips: local storage (UserDefaults) до выполнения `BE-SPEC-02/BE-IMPL-02`.
-- Donor reply contract v1.5 deployed: `original_text` + optional `recipe_story`. Product docs still target v2 two-field reply (`recipe_text` + `donor_comment`).
+- Donor reply contract v1.5 deployed: `original_text` + optional `recipe_story` (заполняется донором, не поваром). Target v2: `recipe_text` + `donor_comment`.
+- `recipe_story` flow: донор вводит → `submit-request` → RPC → `recipes.recipe_story` → повар читает на detail screen в iOS.
 - Product priority clarified on 2026-03-21: after Android parity we optimize the donor loop first, and only then move supporting local data like contacts/chips to backend if still justified.
-- Additional product clarification on 2026-03-21: requests and recipes should converge into one family-recipe card model with statuses; primary UI should hide dates and support delete + `recipe_story`.
+- Additional product clarification on 2026-03-21: requests and recipes should converge into one family-recipe card model with statuses; primary UI should hide dates and support delete.
