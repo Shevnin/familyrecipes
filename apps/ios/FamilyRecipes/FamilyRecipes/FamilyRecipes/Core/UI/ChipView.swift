@@ -8,14 +8,15 @@ struct ChipView: View {
     var body: some View {
         Button { action?() } label: {
             Text(text)
-                .font(.subheadline)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(chipColor.opacity(isSelected ? 0.3 : 0.15))
+                .font(.caption.weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(chipColor.opacity(isSelected ? 0.25 : 0.12))
                 .foregroundStyle(chipColor)
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
-                    Capsule().stroke(chipColor.opacity(0.3), lineWidth: isSelected ? 1.5 : 0)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(chipColor.opacity(isSelected ? 0.4 : 0), lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)

@@ -5,75 +5,52 @@ import SwiftUI
 
 struct CreateRequestView: View {
     var requestDraft: RequestDraft
+    var cardsViewModel: RecipesViewModel
     @State private var viewModel = CreateRequestViewModel()
+    @State private var showSuggestions = false
+    @State private var linkCopied = false
+    @FocusState private var recipientFocused: Bool
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 24) {
-                        if let result = viewModel.result {
-                            successSection(result, proxy: proxy)
-                        } else {
-                            if !viewModel.chipNames.isEmpty {
-                                chipsSection
-                            }
-                            formSection
-                        }
+            ScrollView {
+                VStack(spacing: 20) {
+                    formSection
 
-                        RequestHistorySection(
-                            requests: viewModel.history,
-                            isLoading: viewModel.isHistoryLoading,
-                            errorMessage: viewModel.historyError,
-                            onRetry: { await viewModel.loadHistory() },
-                            onShare: { viewModel.shareRequest($0) },
-                            canShare: { viewModel.canShareRequest($0) }
-                        )
-                        .id("history")
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 24)
-                    .padding(.bottom, 24)
+                    RequestHistorySection(
+                        cards: cardsViewModel.cards.filter { $0.requestId != nil },
+                        isLoading: cardsViewModel.isLoading,
+                        errorMessage: cardsViewModel.errorMessage,
+                        onRetry: { await cardsViewModel.loadCards() },
+                        onShare: { viewModel.shareCard($0) },
+                        canShare: { viewModel.canShareCard($0) }
+                    )
+                    .id("history")
                 }
+                .padding(.horizontal, DS.screenPadding)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
             }
+            .wpBackground()
             .navigationTitle("Запросить рецепт")
+            .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $viewModel.showShareSheet) {
                 if let text = viewModel.activeShareText {
                     ShareSheet(text: text)
                 }
             }
             .task {
-                await viewModel.loadHistory()
+                if cardsViewModel.cards.isEmpty {
+                    await cardsViewModel.loadCards()
+                }
             }
             .onChange(of: requestDraft.hasDraft) { _, hasDraft in
                 if hasDraft {
                     let draft = requestDraft.consume()
                     viewModel.recipientName = draft.recipient
                     viewModel.dishName = draft.dish
+                    viewModel.parentRecipeId = draft.parentRecipeId
                     viewModel.result = nil
-                }
-            }
-        }
-    }
-
-    // MARK: - Chips
-
-    private var chipsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Уже просили у…")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(viewModel.chipNames, id: \.self) { name in
-                        ChipView(
-                            text: name,
-                            isSelected: viewModel.recipientName.lowercased() == name.lowercased()
-                        ) {
-                            viewModel.recipientName = name
-                        }
-                    }
                 }
             }
         }
@@ -83,142 +60,190 @@ struct CreateRequestView: View {
 
     private var formSection: some View {
         VStack(spacing: 16) {
+            // Recipient field with dropdown
             VStack(alignment: .leading, spacing: 6) {
                 Text("Кому отправить?")
-                    .font(.subheadline.weight(.medium))
-                TextField("Имя (мама, бабушка Люда...)", text: $viewModel.recipientName)
-                    .textContentType(.name)
-                    .padding()
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 12))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.WP.textSecondary)
+
+                recipientField
             }
 
+            // Recipe name
             VStack(alignment: .leading, spacing: 6) {
-                Text("Какой рецепт?")
-                    .font(.subheadline.weight(.medium))
+                Text("Название рецепта")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.WP.textSecondary)
                 TextField("Борщ, пирожки с мясом...", text: $viewModel.dishName)
-                    .padding()
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 12))
+                    .wpInput()
+                    .disabled(viewModel.result != nil)
             }
 
+            // Error
             if let error = viewModel.errorMessage {
                 Text(error)
                     .font(.footnote)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.WP.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button {
-                Task { await viewModel.createRequest() }
-            } label: {
-                Group {
+            // CTA
+            if viewModel.result == nil {
+                Button {
+                    Task {
+                        await viewModel.createRequest()
+                        if viewModel.result != nil {
+                            await cardsViewModel.loadCards()
+                        }
+                    }
+                } label: {
                     if viewModel.isLoading {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Text("Отправить запрос")
-                            .fontWeight(.semibold)
+                        Text("Получить ссылку")
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 24)
+                .buttonStyle(WPPrimaryButton())
+                .disabled(!viewModel.isFormValid || viewModel.isLoading)
+                .padding(.top, 4)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(!viewModel.isFormValid || viewModel.isLoading)
-            .padding(.top, 8)
+
+            // Inline result
+            if let result = viewModel.result {
+                inlineResult(result)
+            }
         }
+        .wpSoftSurface(padding: 16, radius: DS.panelRadius)
     }
 
-    // MARK: - Success
+    // MARK: - Recipient Field with Suggestions
 
-    private func successSection(_ result: CreateRequestResponse, proxy: ScrollViewProxy) -> some View {
-        VStack(spacing: 20) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.green)
-
-            Text("Запрос создан!")
-                .font(.title2.bold())
-
-            Text("Отправьте ссылку получателю — он заполнит рецепт через форму.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            linkCard(result.webURL)
-
-            VStack(spacing: 12) {
-                Text("Что дальше?")
-                    .font(.headline)
-
-                Button {
-                    viewModel.showShareSheet = true
-                } label: {
-                    Label("Поделиться ссылкой", systemImage: "square.and.arrow.up")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                HStack(spacing: 12) {
-                    #if canImport(UIKit)
-                    Button {
-                        UIPasteboard.general.string = result.webURL
-                    } label: {
-                        Label("Копировать", systemImage: "doc.on.doc")
-                            .frame(maxWidth: .infinity)
+    private var recipientField: some View {
+        VStack(spacing: 0) {
+            TextField("Имя (мама, бабушка Люда...)", text: $viewModel.recipientName)
+                .textContentType(.name)
+                .wpInput()
+                .focused($recipientFocused)
+                .disabled(viewModel.result != nil)
+                .onChange(of: recipientFocused) { _, focused in
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        showSuggestions = focused
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    #endif
-
-                    Button {
-                        withAnimation {
-                            proxy.scrollTo("history", anchor: .top)
+                }
+                .onChange(of: viewModel.recipientName) { _, _ in
+                    if recipientFocused {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            showSuggestions = true
                         }
-                    } label: {
-                        Label("История", systemImage: "list.bullet")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
                 }
 
-                Button {
-                    viewModel.reset()
-                } label: {
-                    Text("Новый запрос")
-                        .frame(maxWidth: .infinity)
+            if showSuggestions && viewModel.result == nil {
+                let suggestions = viewModel.filteredSuggestions(from: cardsViewModel.cards)
+                if !suggestions.isEmpty {
+                    VStack(spacing: 0) {
+                        ForEach(Array(suggestions.prefix(5)), id: \.self) { name in
+                            Button {
+                                viewModel.recipientName = name
+                                recipientFocused = false
+                                showSuggestions = false
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(ChipView.stableColor(for: name).opacity(0.15))
+                                        .frame(width: 24, height: 24)
+                                        .overlay(
+                                            Text(String(name.prefix(1)).uppercased())
+                                                .font(.caption2.weight(.bold))
+                                                .foregroundStyle(ChipView.stableColor(for: name))
+                                        )
+
+                                    Text(name)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.WP.textPrimary)
+
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .background(Color.WP.surface, in: RoundedRectangle(cornerRadius: DS.inputRadius, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.inputRadius, style: .continuous)
+                            .stroke(Color.WP.divider, lineWidth: 1)
+                    )
+                    .padding(.top, 4)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
             }
         }
     }
 
-    // MARK: - Link Card
+    // MARK: - Inline Result
 
-    private func linkCard(_ url: String) -> some View {
-        HStack {
-            Text(url)
-                .font(.caption.monospaced())
-                .lineLimit(2)
-                .foregroundStyle(.secondary)
+    private func inlineResult(_ result: CreateRequestResponse) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+                .overlay(Color.WP.divider)
 
-            Spacer()
+            // Link + Copy
+            HStack(spacing: 8) {
+                Text(result.webURL)
+                    .font(.caption.monospaced())
+                    .lineLimit(2)
+                    .foregroundStyle(Color.WP.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            #if canImport(UIKit)
-            Button {
-                UIPasteboard.general.string = url
-            } label: {
-                Image(systemName: "doc.on.doc")
+                #if canImport(UIKit)
+                Button {
+                    UIPasteboard.general.string = result.webURL
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(.easeInOut(duration: 0.2)) { linkCopied = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        withAnimation(.easeInOut(duration: 0.2)) { linkCopied = false }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: linkCopied ? "checkmark" : "doc.on.doc")
+                            .font(.caption2)
+                            .contentTransition(.symbolEffect(.replace))
+                        Text(linkCopied ? "Скопировано" : "Копировать")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(linkCopied ? Color.WP.green : Color.WP.accentDark)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.WP.surfaceSoft, in: RoundedRectangle(cornerRadius: DS.rowRadius, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.rowRadius, style: .continuous)
+                            .stroke(linkCopied ? Color.WP.green.opacity(0.3) : Color.WP.divider, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                #endif
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            #endif
+            .padding(12)
+            .background(Color.WP.surface, in: RoundedRectangle(cornerRadius: DS.rowRadius, style: .continuous))
+
+            // Explanation
+            Text("Вставьте ссылку в мессенджер и отправьте адресату. У него будет форма чтобы заполнить. Ваш список рецептов пополнился этим запросом.")
+                .font(.caption)
+                .foregroundStyle(Color.WP.textSecondary)
+                .lineSpacing(3)
+
+            // New request button
+            Button {
+                linkCopied = false
+                viewModel.reset()
+            } label: {
+                Text("Сформировать новый запрос")
+            }
+            .buttonStyle(WPSecondaryButton())
         }
-        .padding()
-        .background(.fill.tertiary, in: .rect(cornerRadius: 12))
     }
 }
 
@@ -235,4 +260,3 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 #endif
-

@@ -2,3 +2,15 @@
 node_modules/
 .env
 /dist
+.envrc
+.env.local
+supabase/.temp/
+supabase/.branches/
+
+# iOS
+apps/ios/**/Config.plist
+apps/ios/**/Config.xcconfig
+apps/ios/**/*.xcuserstate
+apps/ios/**/xcuserdata/
+apps/ios/**/DerivedData/
+.deriveddata/

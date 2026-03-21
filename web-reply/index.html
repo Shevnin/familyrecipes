@@ -120,6 +120,30 @@
       line-height: 1.2;
     }
 
+    .story-block {
+      display: none;
+      background: #F5F0EA;
+      border-left: 3px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+    }
+    .story-block.visible { display: block; }
+    .story-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .story-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
     .field {
       margin-bottom: 20px;
     }
@@ -260,6 +284,11 @@
         <div class="form-dish" id="form-dish"></div>
       </div>
 
+      <div class="story-block" id="story-block">
+        <div class="story-label">История рецепта</div>
+        <div class="story-text" id="story-text"></div>
+      </div>
+
       <form id="recipe-form" autocomplete="off">
         <div class="field">
           <label for="submitted_by_name">Ваше имя</label>
@@ -375,6 +404,12 @@
     document.getElementById('form-dish').textContent = data.dish_name;
     document.getElementById('submitted_by_name').value = data.recipient_name;
     document.getElementById('recipe_title').value = data.dish_name;
+
+    if (data.recipe_story) {
+      document.getElementById('story-text').textContent = data.recipe_story;
+      document.getElementById('story-block').classList.add('visible');
+    }
+
     showState('form');
   })
   .catch(function(err) {

@@ -10,17 +10,15 @@ struct ContactEditView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Имя") {
-                    TextField("Бабушка Люда", text: $name)
+            ScrollView {
+                VStack(spacing: 16) {
+                    field("Имя", placeholder: "Бабушка Люда", text: $name)
+                    field("Кто это?", placeholder: "семья, друг, коллега…", text: $type)
+                    field("Заметка", placeholder: "Любит готовить борщ", text: $note)
                 }
-                Section("Кто это?") {
-                    TextField("семья, друг, коллега…", text: $type)
-                }
-                Section("Заметка") {
-                    TextField("Любит готовить борщ", text: $note)
-                }
+                .padding(20)
             }
+            .wpBackground()
             .navigationTitle(contact == nil ? "Новый контакт" : "Редактировать")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -29,6 +27,8 @@ struct ContactEditView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Сохранить") { save(); dismiss() }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.WP.accent)
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -39,6 +39,16 @@ struct ContactEditView: View {
                     note = c.note
                 }
             }
+        }
+    }
+
+    private func field(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.WP.textSecondary)
+            TextField(placeholder, text: text)
+                .wpInput()
         }
     }
 

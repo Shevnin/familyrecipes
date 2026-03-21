@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const { data: request, error } = await serviceClient
       .from("recipe_requests")
-      .select("recipient_name, dish_name, status, expires_at")
+      .select("recipient_name, dish_name, status, expires_at, recipe_story")
       .eq("token_hash", tokenHash)
       .single();
 
@@ -54,13 +54,18 @@ Deno.serve(async (req) => {
       ? "expired"
       : request.status;
 
+    const payload: Record<string, unknown> = {
+      recipient_name: request.recipient_name,
+      dish_name: request.dish_name,
+      status: effectiveStatus,
+      expires_at: request.expires_at,
+    };
+    if (request.recipe_story) {
+      payload.recipe_story = request.recipe_story;
+    }
+
     return new Response(
-      JSON.stringify({
-        recipient_name: request.recipient_name,
-        dish_name: request.dish_name,
-        status: effectiveStatus,
-        expires_at: request.expires_at,
-      }),
+      JSON.stringify(payload),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

@@ -65,27 +65,27 @@ struct EdgeFunctionsClient {
         )
     }
 
-    // MARK: - Request History
+    // MARK: - Unified Family Recipe Cards
 
-    func fetchRequestHistory() async throws -> [RecipeRequest] {
+    func fetchFamilyCards() async throws -> [FamilyRecipeCard] {
         if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
             _ = try await SupabaseAuthClient.shared.refreshSession()
         }
 
         do {
-            return try await performFetchRequestHistory()
+            return try await performFetchFamilyCards()
         } catch NetworkError.httpError(let code, _) where code == 401 {
             _ = try await SupabaseAuthClient.shared.refreshSession()
-            return try await performFetchRequestHistory()
+            return try await performFetchFamilyCards()
         }
     }
 
-    private func performFetchRequestHistory() async throws -> [RecipeRequest] {
+    private func performFetchFamilyCards() async throws -> [FamilyRecipeCard] {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
 
-        let url = "\(restURL)/recipe_requests?select=id,recipient_name,dish_name,status,created_at&order=created_at.desc"
+        let url = "\(restURL)/family_recipe_cards?select=card_id,household_id,title,author_name,original_text,card_status,recipe_story,recipe_id,request_id,created_at&order=created_at.desc"
         return try await HTTPClient.shared.request(
             url: url,
             method: .get,
@@ -94,6 +94,56 @@ struct EdgeFunctionsClient {
                 "apikey": AppConfig.supabaseAnonKey
             ]
         )
+    }
+
+    // MARK: - Hide Card (Soft Delete)
+
+    func hideCard(_ card: FamilyRecipeCard) async throws {
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+        }
+
+        do {
+            try await performHideCard(card)
+        } catch NetworkError.httpError(let code, _) where code == 401 {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+            try await performHideCard(card)
+        }
+    }
+
+    private func performHideCard(_ card: FamilyRecipeCard) async throws {
+        guard let token = await SupabaseAuthClient.shared.accessToken else {
+            throw NetworkError.httpError(statusCode: 401, body: Data())
+        }
+
+        let headers = [
+            "Authorization": "Bearer \(token)",
+            "apikey": AppConfig.supabaseAnonKey,
+            "Prefer": "return=minimal"
+        ]
+
+        struct HideBody: Encodable {
+            let hiddenAt: String
+            enum CodingKeys: String, CodingKey { case hiddenAt = "hidden_at" }
+        }
+
+        let body = HideBody(hiddenAt: ISO8601DateFormatter().string(from: Date()))
+
+        if let recipeId = card.recipeId {
+            try await HTTPClient.shared.requestNoContent(
+                url: "\(restURL)/recipes?id=eq.\(recipeId)",
+                method: .patch,
+                headers: headers,
+                body: body
+            )
+        } else if let requestId = card.requestId {
+            try await HTTPClient.shared.requestNoContent(
+                url: "\(restURL)/recipe_requests?id=eq.\(requestId)",
+                method: .patch,
+                headers: headers,
+                body: body
+            )
+        }
     }
 
     // MARK: - Create Recipe

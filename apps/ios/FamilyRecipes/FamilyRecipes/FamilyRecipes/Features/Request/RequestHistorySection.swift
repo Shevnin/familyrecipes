@@ -4,99 +4,110 @@ import UIKit
 import SwiftUI
 
 struct RequestHistorySection: View {
-    let requests: [RecipeRequest]
+    let cards: [FamilyRecipeCard]
     let isLoading: Bool
     let errorMessage: String?
     let onRetry: () async -> Void
-    let onShare: (RecipeRequest) -> Void
-    let canShare: (RecipeRequest) -> Bool
+    let onShare: (FamilyRecipeCard) -> Void
+    let canShare: (FamilyRecipeCard) -> Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("История запросов")
-                .font(.headline)
+            Text("ИСТОРИЯ ЗАПРОСОВ")
+                .font(.caption.weight(.bold))
+                .tracking(1)
+                .foregroundStyle(Color.WP.textSecondary)
 
-            if isLoading && requests.isEmpty {
+            if isLoading && cards.isEmpty {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 8)
-            } else if let error = errorMessage, requests.isEmpty {
+            } else if let error = errorMessage, cards.isEmpty {
                 VStack(spacing: 8) {
                     Text(error)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.WP.red)
                     Button("Повторить") {
                         Task { await onRetry() }
                     }
-                    .font(.footnote)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color.WP.accentDark)
                 }
-            } else if requests.isEmpty {
+            } else if cards.isEmpty {
                 Text("Вы ещё не отправляли запросов.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.WP.textSecondary)
             } else {
-                ForEach(requests) { req in
-                    requestRow(req)
+                VStack(spacing: 0) {
+                    ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                        cardRow(card)
+
+                        if index != cards.index(before: cards.endIndex) {
+                            Divider()
+                                .overlay(Color.WP.divider)
+                                .padding(.leading, 12)
+                        }
+                    }
                 }
+                .background(Color.WP.surfaceSoft, in: RoundedRectangle(cornerRadius: DS.panelRadius, style: .continuous))
             }
         }
     }
 
-    private func requestRow(_ req: RecipeRequest) -> some View {
+    private func cardRow(_ card: FamilyRecipeCard) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(req.dishName)
-                        .font(.subheadline.weight(.medium))
-                    Text("для \(req.recipientName)")
+                    Text(card.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.WP.textPrimary)
+                    Text("для \(card.authorName)")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.WP.textSecondary)
                 }
 
                 Spacer()
 
-                Text(req.statusLabel)
-                    .font(.caption.weight(.medium))
+                Text(card.statusLabel)
+                    .font(.caption2.weight(.bold))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(req.statusColor.opacity(0.15))
-                    .foregroundStyle(req.statusColor)
-                    .clipShape(Capsule())
+                    .background(card.statusColor.opacity(0.12))
+                    .foregroundStyle(card.statusColor)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.rowRadius, style: .continuous))
             }
 
-            HStack {
-                Text(req.formattedDate)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+            if canShare(card) {
+                HStack {
+                    Spacer()
 
-                Spacer()
-
-                if canShare(req) {
-                    Button {
-                        onShare(req)
-                    } label: {
-                        Label("Поделиться", systemImage: "square.and.arrow.up")
-                            .font(.caption)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
-
-                    #if canImport(UIKit)
-                    Button {
-                        if let entry = LinkCacheStore.shared.entry(for: req.id) {
-                            UIPasteboard.general.string = entry.webURL
+                    HStack(spacing: 8) {
+                        Button {
+                            onShare(card)
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.caption2)
+                                .foregroundStyle(Color.WP.accentDark)
                         }
-                    } label: {
-                        Label("Копировать", systemImage: "doc.on.doc")
-                            .font(.caption)
+                        .buttonStyle(.plain)
+
+                        #if canImport(UIKit)
+                        Button {
+                            if let requestId = card.requestId,
+                               let entry = LinkCacheStore.shared.entry(for: requestId) {
+                                UIPasteboard.general.string = entry.webURL
+                            }
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                                .font(.caption2)
+                                .foregroundStyle(Color.WP.accentDark)
+                        }
+                        .buttonStyle(.plain)
+                        #endif
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
-                    #endif
                 }
             }
         }
         .padding(12)
-        .background(.fill.tertiary, in: .rect(cornerRadius: 12))
     }
 }

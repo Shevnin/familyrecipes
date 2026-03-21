@@ -35,7 +35,14 @@ Deno.serve(async (req) => {
 
     // --- Parse input ---
     const body = await req.json();
-    const { recipient_name, dish_name, expires_in_days = 7, household_id } = body;
+    const {
+      recipient_name,
+      dish_name,
+      recipe_story = null,
+      parent_recipe_id = null,
+      expires_in_days = 7,
+      household_id,
+    } = body;
 
     if (!recipient_name || !dish_name) {
       return new Response(
@@ -99,17 +106,21 @@ Deno.serve(async (req) => {
     ).toISOString();
 
     // --- Create request ---
+    const insertPayload: Record<string, unknown> = {
+      household_id: resolvedHouseholdId,
+      requested_by: user.id,
+      recipient_name,
+      dish_name,
+      token_hash: tokenHash,
+      status: "pending",
+      expires_at: expiresAt,
+    };
+    if (recipe_story) insertPayload.recipe_story = recipe_story;
+    if (parent_recipe_id) insertPayload.parent_recipe_id = parent_recipe_id;
+
     const { data: request, error: insertError } = await serviceClient
       .from("recipe_requests")
-      .insert({
-        household_id: resolvedHouseholdId,
-        requested_by: user.id,
-        recipient_name,
-        dish_name,
-        token_hash: tokenHash,
-        status: "pending",
-        expires_at: expiresAt,
-      })
+      .insert(insertPayload)
       .select("id")
       .single();
 

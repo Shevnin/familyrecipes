@@ -16,22 +16,41 @@ struct CreateRecipeView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Название") {
-                    TextField("Борщ, пирожки…", text: $title)
-                }
-                Section("Рецепт") {
-                    TextEditor(text: $originalText)
-                        .frame(minHeight: 150)
-                }
-                if let error = errorMessage {
-                    Section {
+            ScrollView {
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Название")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.WP.textSecondary)
+                        TextField("Борщ, пирожки…", text: $title)
+                            .wpInput()
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Рецепт")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.WP.textSecondary)
+                        TextEditor(text: $originalText)
+                            .font(.body)
+                            .frame(minHeight: 150)
+                            .scrollContentBackground(.hidden)
+                            .padding(12)
+                            .background(
+                                Color.WP.surfaceSoft,
+                                in: RoundedRectangle(cornerRadius: DS.inputRadius, style: .continuous)
+                            )
+                    }
+
+                    if let error = errorMessage {
                         Text(error)
-                            .foregroundStyle(.red)
                             .font(.footnote)
+                            .foregroundStyle(Color.WP.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+                .padding(20)
             }
+            .wpBackground()
             .navigationTitle("Новый рецепт")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -45,6 +64,8 @@ struct CreateRecipeView: View {
                         Button("Сохранить") {
                             Task { await save() }
                         }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.WP.accent)
                         .disabled(!isValid)
                     }
                 }

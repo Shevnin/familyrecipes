@@ -1,5 +1,7 @@
 # Backend Setup: Supabase (Dev)
 
+> Note: this runbook documents the **currently deployed v1 contract** for `submit-request` (`original_text` as one field). Product docs as of 2026-03-21 target donor reply v2 (`recipe_text` + `donor_comment`), but that contract is not implemented in the deployed backend yet.
+
 ## Предварительные требования
 
 1. Установить [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started):
