@@ -65,11 +65,19 @@ Deno.serve(async (req) => {
     const tokenHash = await sha256(token);
     const serviceClient = createServiceClient();
 
+    // Generate edit token for post-submit correction (DONOR-07)
+    const editToken = crypto.randomUUID();
+    const editTokenHash = await sha256(editToken);
+    const EDIT_WINDOW_HOURS = 72;
+    const editExpiresAt = new Date(Date.now() + EDIT_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+
     const rpcParams: Record<string, unknown> = {
       p_token_hash: tokenHash,
       p_submitted_by_name: submitted_by_name,
       p_recipe_title: recipe_title,
       p_original_text: original_text,
+      p_edit_token_hash: editTokenHash,
+      p_edit_expires_at: editExpiresAt,
     };
     if (recipe_story) {
       rpcParams.p_recipe_story = recipe_story;
@@ -99,6 +107,8 @@ Deno.serve(async (req) => {
         success: true,
         recipe_id: data.recipe_id,
         submission_id: data.submission_id,
+        edit_token: editToken,
+        edit_expires_at: editExpiresAt,
       }),
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

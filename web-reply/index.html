@@ -120,6 +120,17 @@
       line-height: 1.2;
     }
 
+    .edit-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: #FEF2F2;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
     .field {
       margin-bottom: 20px;
     }
@@ -211,6 +222,25 @@
       color: var(--text-secondary);
       font-size: 15px;
       line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .edit-cta-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .edit-cta-btn:hover {
+      background: var(--accent);
+      color: #fff;
     }
   </style>
 </head>
@@ -252,10 +282,29 @@
     </div>
   </div>
 
-  <!-- Form -->
+  <!-- Edit link not found -->
+  <div id="state-edit-not-found" class="state">
+    <div class="card error-card">
+      <div class="error-icon">&#128269;</div>
+      <div class="error-title">Ссылка для редактирования не найдена</div>
+      <div class="error-text">Ссылка недействительна или была использована.</div>
+    </div>
+  </div>
+
+  <!-- Edit window expired -->
+  <div id="state-edit-expired" class="state">
+    <div class="card error-card">
+      <div class="error-icon">&#8987;</div>
+      <div class="error-title">Время для правок истекло</div>
+      <div class="error-text">Окно редактирования закрыто. Рецепт уже отправлен получателю.</div>
+    </div>
+  </div>
+
+  <!-- Form (submit + edit mode share this) -->
   <div id="state-form" class="state">
     <div class="card">
       <div class="form-header">
+        <div class="edit-badge" id="edit-badge" style="display:none;">Редактирование</div>
         <div class="form-context" id="form-context"></div>
         <div class="form-dish" id="form-dish"></div>
       </div>
@@ -286,12 +335,22 @@
     </div>
   </div>
 
-  <!-- Success -->
+  <!-- Success (after first submit) -->
   <div id="state-success" class="state">
     <div class="card success-card">
       <div class="success-icon">&#10003;</div>
       <div class="success-title">Рецепт отправлен!</div>
-      <div class="success-text" id="success-text">Спасибо! Рецепт уже доступен в приложении.</div>
+      <div class="success-text" id="success-text">Спасибо! Рецепт уже доступен в приложении.<br>В течение 72 часов вы можете внести правки.</div>
+      <button class="edit-cta-btn" id="edit-cta-btn" style="display:none;">Исправить рецепт</button>
+    </div>
+  </div>
+
+  <!-- Edit success -->
+  <div id="state-edit-success" class="state">
+    <div class="card success-card">
+      <div class="success-icon">&#10003;</div>
+      <div class="success-title">Изменения сохранены</div>
+      <div class="success-text">Обновлённый рецепт уже доступен в приложении.</div>
     </div>
   </div>
 </div>
@@ -301,25 +360,25 @@
   'use strict';
 
   // --- Config ---
-  // SUPABASE_FUNCTIONS_URL is set at deploy time.
-  // For GitHub Pages dev, override via query param ?api=...
-  const DEFAULT_API = 'https://wlxtobrxqytnmpifbnev.supabase.co/functions/v1';
-  const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndseHRvYnJ4cXl0bm1waWZibmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjE0MjQsImV4cCI6MjA4Nzc5NzQyNH0.SIDMiCz8Rok0uK8ViYXkRGg-KEQlEojYq0EnCCkRBnY';
+  var DEFAULT_API = 'https://wlxtobrxqytnmpifbnev.supabase.co/functions/v1';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndseHRvYnJ4cXl0bm1waWZibmV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMjE0MjQsImV4cCI6MjA4Nzc5NzQyNH0.SIDMiCz8Rok0uK8ViYXkRGg-KEQlEojYq0EnCCkRBnY';
 
-  // CAPTCHA: Turnstile widget integration placeholder.
   var CAPTCHA_TOKEN = null;
-  const params = new URLSearchParams(location.search);
-  const API_BASE = params.get('api') || DEFAULT_API;
+  var params = new URLSearchParams(location.search);
+  var API_BASE = params.get('api') || DEFAULT_API;
 
-  // --- Extract token ---
-  // Supports /r/<token> (path) and ?token=<token> (query)
+  // --- Determine mode: submit (token) or edit (edit_token) ---
   function getToken() {
-    const pathMatch = location.pathname.match(/\/r\/([a-f0-9-]{36})$/i);
+    var pathMatch = location.pathname.match(/\/r\/([a-f0-9-]{36})$/i);
     if (pathMatch) return pathMatch[1];
     return params.get('token');
   }
 
-  const token = getToken();
+  var token = getToken();
+  var editToken = params.get('edit_token');
+
+  // Track edit_token received after successful submit (for CTA button)
+  var pendingEditToken = null;
 
   // --- State management ---
   function showState(id) {
@@ -338,7 +397,102 @@
     document.getElementById('form-error').classList.remove('visible');
   }
 
-  // --- Init ---
+  // ============================================================
+  // EDIT MODE
+  // ============================================================
+  if (editToken) {
+    // Fetch edit metadata
+    fetch(API_BASE + '/get-edit-meta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY },
+      body: JSON.stringify({ edit_token: editToken })
+    })
+    .then(function(resp) {
+      if (resp.status === 404) { showState('edit-not-found'); throw new Error('stop'); }
+      if (resp.status === 410) { showState('edit-expired'); throw new Error('stop'); }
+      return resp.json();
+    })
+    .then(function(data) {
+      if (data.error === 'edit_not_found') { showState('edit-not-found'); return; }
+      if (data.error === 'edit_window_expired') { showState('edit-expired'); return; }
+
+      // Show edit form with prefilled values
+      document.getElementById('edit-badge').style.display = 'inline-block';
+      document.getElementById('form-context').textContent = 'Исправьте рецепт, если нужно:';
+      document.getElementById('form-dish').textContent = data.recipe_title;
+      document.getElementById('submitted_by_name').value = data.submitted_by_name || '';
+      document.getElementById('recipe_title').value = data.recipe_title || '';
+      document.getElementById('original_text').value = data.original_text || '';
+      document.getElementById('recipe_story').value = data.recipe_story || '';
+      document.getElementById('submit-btn').textContent = 'Сохранить изменения';
+      showState('form');
+    })
+    .catch(function(err) {
+      if (err.message === 'stop') return;
+      showState('edit-not-found');
+    });
+
+    // Edit form submit handler
+    document.getElementById('recipe-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      hideError();
+
+      var btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Сохраняем...';
+
+      var storyVal = document.getElementById('recipe_story').value.trim();
+      var payload = {
+        edit_token: editToken,
+        submitted_by_name: document.getElementById('submitted_by_name').value.trim(),
+        recipe_title: document.getElementById('recipe_title').value.trim(),
+        original_text: document.getElementById('original_text').value.trim()
+      };
+      if (storyVal) {
+        payload.recipe_story = storyVal;
+      }
+
+      if (!payload.submitted_by_name || !payload.recipe_title || !payload.original_text) {
+        showError('Пожалуйста, заполните все обязательные поля.');
+        btn.disabled = false;
+        btn.textContent = 'Сохранить изменения';
+        return;
+      }
+
+      fetch(API_BASE + '/update-submitted-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY },
+        body: JSON.stringify(payload)
+      })
+      .then(function(resp) {
+        return resp.json().then(function(data) {
+          return { status: resp.status, data: data };
+        });
+      })
+      .then(function(result) {
+        if (result.status === 200 && result.data.success) {
+          showState('edit-success');
+          return;
+        }
+        if (result.status === 404) { showState('edit-not-found'); return; }
+        if (result.status === 410) { showState('edit-expired'); return; }
+        showError('Не удалось сохранить. Попробуйте ещё раз.');
+        btn.disabled = false;
+        btn.textContent = 'Сохранить изменения';
+      })
+      .catch(function() {
+        showError('Ошибка сети. Проверьте подключение и попробуйте снова.');
+        btn.disabled = false;
+        btn.textContent = 'Сохранить изменения';
+      });
+    });
+
+    return; // Stop here — edit mode, no submit flow
+  }
+
+  // ============================================================
+  // SUBMIT MODE (original flow)
+  // ============================================================
   if (!token) {
     showState('not-found');
     return;
@@ -430,6 +584,16 @@
     })
     .then(function(result) {
       if (result.status === 201) {
+        // Store edit_token for CTA button
+        if (result.data.edit_token) {
+          pendingEditToken = result.data.edit_token;
+          var ctaBtn = document.getElementById('edit-cta-btn');
+          ctaBtn.style.display = 'inline-block';
+          ctaBtn.addEventListener('click', function() {
+            var editUrl = location.origin + location.pathname + '?edit_token=' + pendingEditToken;
+            location.href = editUrl;
+          });
+        }
         showState('success');
         return;
       }
