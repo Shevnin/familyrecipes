@@ -61,14 +61,15 @@
 53. `DONOR-02` Web-reply onboarding block: короткое объяснение на первом экране ("вас попросили поделиться рецептом").
 54. `DONOR-03` Режимы ответа в web-reply: `Коротко` / `Подробно`.
 55. `DONOR-04` Черновик донора (autosave/restore) в web-reply.
-56. `DONOR-11` Метрики воронки донора (open/start/success/error/retry).
-57. `DONOR-12` Donor reply v2: разбить ответ донора на два поля — `recipe_text` + `donor_comment`.
-58. `BE-SPEC-03` Backend-спека для donor comment: storage, API-контракт, миграции, detail read-model.
-59. `BE-IMPL-03` Реализация donor comment в backend (`submit-request`, БД, read queries).
-60. `IOS-09` Recipe detail v2: показать donor comment отдельно от основного текста рецепта.
-61. `ANDROID-09` Android parity для donor comment / recipe detail v2.
-62. `BE-SPEC-02` Backend-спека для contacts/chips (таблица, RLS, API-контракт, миграции) — **deferred** до подтвержденной cross-device необходимости.
-63. `BE-IMPL-02` Реализация server storage для contacts/chips в Supabase (миграции + RLS + доступ из iOS/Android) — **deferred** после `BE-SPEC-02`.
+56. ~~`DONOR-07` Post-submit редактирование ответа донора через `edit_token`: success CTA `Исправить рецепт`, prefilled reopen flow, ограниченное окно 72 часа.~~ [done]
+57. `DONOR-11` Метрики воронки донора (open/start/success/error/retry).
+58. `DONOR-12` Donor reply v2: разбить ответ донора на два поля — `recipe_text` + `donor_comment`.
+59. `BE-SPEC-03` Backend-спека для donor comment: storage, API-контракт, миграции, detail read-model.
+60. `BE-IMPL-03` Реализация donor comment в backend (`submit-request`, БД, read queries).
+61. `IOS-09` Recipe detail v2: показать donor comment отдельно от основного текста рецепта.
+62. `ANDROID-09` Android parity для donor comment / recipe detail v2.
+63. `BE-SPEC-02` Backend-спека для contacts/chips (таблица, RLS, API-контракт, миграции) — **deferred** до подтвержденной cross-device необходимости.
+64. `BE-IMPL-02` Реализация server storage для contacts/chips в Supabase (миграции + RLS + доступ из iOS/Android) — **deferred** после `BE-SPEC-02`.
 
 ## P0 Order Of Execution
 1. ~~`BE-SPEC-04` + `BE-IMPL-04`~~ [done]
@@ -78,9 +79,10 @@
 5. Full E2E на реальных устройствах
 6. ~~`REQ-10...REQ-18`~~ [done]
 7. `DONOR-01...DONOR-04`
-8. `DONOR-11`
-9. `DONOR-12` + `BE-SPEC-03` + `BE-IMPL-03` + `IOS-09` + `ANDROID-09`
-10. `BE-SPEC-02` + `BE-IMPL-02` только если server storage контактов всё ещё подтверждён как реальная боль
+8. ~~`DONOR-07`~~ [done]
+9. `DONOR-11`
+10. `DONOR-12` + `BE-SPEC-03` + `BE-IMPL-03` + `IOS-09` + `ANDROID-09`
+11. `BE-SPEC-02` + `BE-IMPL-02` только если server storage контактов всё ещё подтверждён как реальная боль
 
 ## P0 Acceptance (для iOS и Android parity)
 - `IOS-01 / ANDROID-02`: после submit через web-reply рецепт отображается в списке после refresh.
@@ -122,7 +124,6 @@
 6. Фильтры/поиск по истории запросов в iOS app.
 7. `DONOR-05` Reminder по pending-запросу из app с cooldown.
 8. `DONOR-06` Мультирецепты в одном request context (`Добавить еще рецепт`, отдельные recipe records).
-9. `DONOR-07` Reopen/редактирование после submit через edit-token (ограниченное окно).
 
 ## P2
 1. Голосовой ввод для донора.

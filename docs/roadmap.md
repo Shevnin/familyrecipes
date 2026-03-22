@@ -82,6 +82,7 @@
   - rename `Какой рецепт?` → `Название рецепта`
   - primary CTA `Получить ссылку`
   - inline link result + `Копировать` (micro-feedback) + explanation + `Сформировать новый запрос`
+- [done] `DONOR-07` post-submit edit flow: migration 00007, edge functions `get-edit-meta` + `update-submitted-recipe`, web-reply edit mode via `?edit_token=`, 72h window, CTA `Исправить рецепт`
 - [todo] Donor conversion pack after Android parity:
   - `DONOR-01` share text v2
   - `DONOR-02` onboarding block
@@ -101,6 +102,7 @@
 - Реальная связка мама ↔ сын (разные устройства, guest web).
 - Unified family recipe list with statuses instead of separate request/recipe sections.
 - Donor conversion improvements в zero-install web flow.
+- Donor post-submit correction flow: limited-time edit after successful submit, without login.
 - Donor reply v2: основной текст рецепта + отдельный личный комментарий донора.
 - Читаемое recipe detail experience с акцентом на оригинальный текст и личную заметку.
 - Push-уведомления о выполненном запросе.
