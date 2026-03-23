@@ -57,8 +57,8 @@
 49. ~~`REQ-16` Показывать рядом со ссылкой действие `Копировать`.~~ [done]
 50. ~~`REQ-17` Добавить поясняющий текст под ссылкой.~~ [done]
 51. ~~`REQ-18` Добавить кнопку `Сформировать новый запрос`.~~ [done]
-52. `DONOR-01` Share text v2: явное сообщение "без установки/регистрации, 2-3 минуты", персонализированный текст.
-53. `DONOR-02` Web-reply onboarding block: короткое объяснение на первом экране ("вас попросили поделиться рецептом").
+52. `DONOR-01` Share text v2/v3: явное сообщение "без установки/регистрации, 2-3 минуты", персонализированный и тёплый invite text, который объясняет зачем нужен рецепт и что можно добавить историю рецепта.
+53. `DONOR-02` Web-reply onboarding block: короткое и тёплое объяснение на первом экране (`зачем это`, no app/login, рецепт + история, рецепты близких людей).
 54. `DONOR-03` Режимы ответа в web-reply: `Коротко` / `Подробно`.
 55. `DONOR-04` Черновик донора (autosave/restore) в web-reply.
 56. ~~`DONOR-07` Post-submit редактирование ответа донора через `edit_token`: success CTA `Исправить рецепт`, prefilled reopen flow, ограниченное окно 72 часа.~~ [done]
@@ -70,6 +70,9 @@
 62. `ANDROID-09` Android parity для donor comment / recipe detail v2.
 63. `BE-SPEC-02` Backend-спека для contacts/chips (таблица, RLS, API-контракт, миграции) — **deferred** до подтвержденной cross-device необходимости.
 64. `BE-IMPL-02` Реализация server storage для contacts/chips в Supabase (миграции + RLS + доступ из iOS/Android) — **deferred** после `BE-SPEC-02`.
+65. `POSITION-01` Copy refresh первого касания: сместить framing от узкого "семейные рецепты" к более живому "рецепты близких людей / рецепты с историей / от кого этот рецепт" в share text, donor web, app copy и тестовых презентациях.
+66. `DONOR-13` Story helper prompts для `recipe_story`: optional prompt chips / examples (`от кого рецепт`, `когда готовили`, `по какому поводу`, `какой главный нюанс`), чтобы история рецепта было легче заполнить.
+67. `DETAIL-11` Provenance-first recipe detail: явный верхний блок `от кого`, `почему важен`, `история`, а не только основной текст рецепта.
 
 ## P0 Order Of Execution
 1. ~~`BE-SPEC-04` + `BE-IMPL-04`~~ [done]
@@ -78,11 +81,13 @@
 4. `ANDROID-BUILD-01`
 5. Full E2E на реальных устройствах
 6. ~~`REQ-10...REQ-18`~~ [done]
-7. `DONOR-01...DONOR-04`
-8. ~~`DONOR-07`~~ [done]
-9. `DONOR-11`
-10. `DONOR-12` + `BE-SPEC-03` + `BE-IMPL-03` + `IOS-09` + `ANDROID-09`
-11. `BE-SPEC-02` + `BE-IMPL-02` только если server storage контактов всё ещё подтверждён как реальная боль
+7. `POSITION-01`
+8. `DONOR-01...DONOR-04` + `DONOR-13`
+9. `DETAIL-11`
+10. ~~`DONOR-07`~~ [done]
+11. `DONOR-11`
+12. `DONOR-12` + `BE-SPEC-03` + `BE-IMPL-03` + `IOS-09` + `ANDROID-09`
+13. `BE-SPEC-02` + `BE-IMPL-02` только если server storage контактов всё ещё подтверждён как реальная боль
 
 ## P0 Acceptance (для iOS и Android parity)
 - `IOS-01 / ANDROID-02`: после submit через web-reply рецепт отображается в списке после refresh.
@@ -94,6 +99,10 @@
 - `REQ-11 / REQ-12`: `Кому отправить?` работает как редактируемый выпадающий список, связанный с контактами из раздела друзей.
 - `REQ-13`: поле называется `Название рецепта`.
 - `REQ-14 / REQ-15 / REQ-16 / REQ-17 / REQ-18`: после действия `Получить ссылку` пользователь остаётся на том же экране, видит ссылку, кнопку `Копировать`, поясняющий текст и кнопку `Сформировать новый запрос`.
+- `POSITION-01`: first-touch copy на ключевых экранах и в invite text объясняет продукт как "рецепты близких людей / рецепты с историей", а не только как generic family recipe storage.
+- `DONOR-01 / DONOR-02`: донор по share text и первому экрану за 3-5 секунд понимает, что не нужно ставить приложение, можно написать своими словами и история рецепта приветствуется.
+- `DONOR-13`: поле `История рецепта` поддержано optional prompts / examples и не выглядит как пустая сложная форма.
+- `DETAIL-11`: recipe detail явно показывает автора / происхождение / story layer, а не прячет смысл только в основном тексте.
 - `IOS-02 / ANDROID-02`: из списка открывается detail карточка рецепта без потери контекста навигации.
 - `IOS-03 / ANDROID-03`: новый запрос сразу виден в истории запросов на той же странице "Запросить" с корректным статусом.
 - `IOS-04 / ANDROID-04`: success-экран не "тупик"; пользователь сразу понимает следующий шаг и может поделиться ссылкой повторно.
@@ -124,6 +133,18 @@
 6. Фильтры/поиск по истории запросов в iOS app.
 7. `DONOR-05` Reminder по pending-запросу из app с cooldown.
 8. `DONOR-06` Мультирецепты в одном request context (`Добавить еще рецепт`, отдельные recipe records).
+9. `REQ-19` Optional personal reason в create-request / invite: короткая личная фраза вроде "хочу научиться готовить это как ты", чтобы запрос ощущался не утилитарно, а по-человечески.
+10. ~~`REPEAT-LOOP-01` Mastery loop package: превратить разрозненные `REPEAT-01...04` в один цельный loop.~~ [done — iOS + backend 2026-03-23]
+11. ~~`REPEAT-01` Attempt logging: отметить факт первой/повторной готовки и сохранить результат попытки без тяжёлого журнала.~~ [done — iOS + backend]
+12. ~~`REPEAT-02` Post-cook note: короткая заметка после готовки без отдельного structured editor.~~ [done — iOS PostCookSheet]
+13. ~~`REPEAT-03` Mastery progress for recipe: стадии `получил`, `пробовал`, `почти получилось`, `замастерил` + видимость прогресса на detail screen.~~ [done — iOS MasteryBlock]
+14. ~~`REPEAT-04` Contextual clarification after attempt: мягкий CTA после неудачной/неполной попытки.~~ [done — iOS IOS-12]
+15. `ANDROID-MASTERY-01` Android parity для mastery loop: mastery block на detail, attempt logging sheet, post-cook note, contextual clarification CTA. Backend уже готов. Parity notes: `docs/sessions/2026-03-23_REPEAT_LOOP_01_implementation.md`.
+16. ~~`TECHNIQUES-01` Блок «Техники»: content_kind через backend + Edge Functions + donor web + iOS (segmented control, type picker, adapted copy).~~ [done — 2026-03-23]
+17. `ANDROID-TECHNIQUES-01` Android parity для techniques block: content_kind в Android client, segmented control (Рецепты / Техники), type picker в create request flow, adapted copy на detail/mastery screens. Backend и donor web уже готовы.
+16. `ARCHIVE-01` Browse / filters по людям, происхождению и occasion (`от мамы`, `друзья`, `праздничное`, `из Одессы`) вместо поиска только по названию блюда.
+17. `DONOR-16` Reply-like-a-message / voice-first donor mode: сделать ответ ещё ближе к привычному сообщению, а позже поддержать voice-to-text для доноров, которым проще рассказывать, чем печатать.
+18. `REPEAT-05` Personal stable version: дать пользователю собирать свой повторяемый вариант рецепта рядом с оригиналом, не стирая голос автора.
 
 ## P2
 1. Голосовой ввод для донора.
@@ -134,3 +155,4 @@
 6. `DONOR-08` Запрос правок по блокам (ингредиенты/шаги/советы) с deep-link в нужный блок.
 7. `DONOR-09` Индикатор прогресса заполнения в web-reply.
 8. `DONOR-10` Встроенный пример "как хорошо описать рецепт".
+9. `SHARE-02` View-only recipe memory page: отдельная читаемая web-страница `рецепт + история + автор`, которую можно отправить близким без установки приложения.

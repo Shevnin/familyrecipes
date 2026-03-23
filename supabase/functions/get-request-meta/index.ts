@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const { data: request, error } = await serviceClient
       .from("recipe_requests")
-      .select("recipient_name, dish_name, status, expires_at, recipe_story")
+      .select("recipient_name, dish_name, status, expires_at, recipe_story, content_kind")
       .eq("token_hash", tokenHash)
       .single();
 
@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       dish_name: request.dish_name,
       status: effectiveStatus,
       expires_at: request.expires_at,
+      content_kind: request.content_kind ?? "recipe",
     };
     if (request.recipe_story) {
       payload.recipe_story = request.recipe_story;

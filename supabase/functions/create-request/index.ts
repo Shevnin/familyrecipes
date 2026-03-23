@@ -41,7 +41,11 @@ Deno.serve(async (req) => {
       parent_recipe_id = null,
       expires_in_days = 7,
       household_id,
+      content_kind,
     } = body;
+
+    const resolvedContentKind =
+      content_kind === "technique" ? "technique" : "recipe";
 
     if (!recipient_name || !dish_name) {
       return new Response(
@@ -113,6 +117,7 @@ Deno.serve(async (req) => {
       token_hash: tokenHash,
       status: "pending",
       expires_at: expiresAt,
+      content_kind: resolvedContentKind,
     };
     // recipe_story is filled by the donor on web-reply, not by the chef.
     if (parent_recipe_id) insertPayload.parent_recipe_id = parent_recipe_id;
@@ -140,8 +145,9 @@ Deno.serve(async (req) => {
     const webUrl = linkMode === "query"
       ? `${baseUrl}/web-reply/?token=${token}`
       : `${baseUrl}/r/${token}`;
-    const shareText =
-      `${recipient_name}, поделитесь рецептом "${dish_name}"!\n${webUrl}`;
+    const shareText = resolvedContentKind === "technique"
+      ? `${recipient_name}, поделитесь техникой "${dish_name}"!\n${webUrl}`
+      : `${recipient_name}, поделитесь рецептом "${dish_name}"!\n${webUrl}`;
 
     return new Response(
       JSON.stringify({

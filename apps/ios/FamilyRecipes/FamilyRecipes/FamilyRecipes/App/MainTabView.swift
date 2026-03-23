@@ -52,6 +52,26 @@ private struct SettingsView: View {
                             .padding(.leading, 52)
 
                         NavigationLink {
+                            EquipmentView()
+                        } label: {
+                            settingsRow(title: "Моё оборудование", systemImage: "fork.knife.circle")
+                        }
+
+                        Divider()
+                            .overlay(Color.WP.divider)
+                            .padding(.leading, 52)
+
+                        NavigationLink {
+                            HelpView()
+                        } label: {
+                            settingsRow(title: "Как это работает", systemImage: "questionmark.circle")
+                        }
+
+                        Divider()
+                            .overlay(Color.WP.divider)
+                            .padding(.leading, 52)
+
+                        NavigationLink {
                             CreditsView()
                         } label: {
                             settingsRow(title: "Авторские права", systemImage: "c.circle")

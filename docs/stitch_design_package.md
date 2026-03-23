@@ -13,33 +13,20 @@ Use `Path A: fast parity-first run`.
 - даёт быстрый результат на 4 основных экранах
 - сохраняет возможность потом расшириться до donor flow, login, splash, contacts и full system
 
-### Current accepted visual references
-Use these as the current style baseline:
-- `/Users/user/git-project/familyrecipes/DESIGN.md`
-- `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/list/screen.png`
-- `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/recipe_detail/screen.png`
-- `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/list/code.html`
-- `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/recipe_detail/code.html`
-
-These are more important now than older exploratory mockups.
-
 ### Что делать в Stitch по шагам
 1. Start a new Stitch project.
 2. If Stitch supports context files, add `/Users/user/git-project/familyrecipes/DESIGN.md`.
-3. If Stitch supports image context in your session, upload:
-   - `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/list/screen.png`
-   - `/Users/user/git-project/familyrecipes/docs/stitch_exports/2026-03-21/recipe_detail/screen.png`
-4. Use `/Users/user/git-project/familyrecipes/docs/mockups/request-detail-redesign.svg` only as a secondary historical reference if needed.
-5. Paste the master prompt below.
-6. Ask Stitch to generate 4 current MVP screens first:
+3. If Stitch supports image context in your session, upload `/Users/user/git-project/familyrecipes/docs/mockups/request-detail-redesign.svg`; otherwise skip it.
+4. Paste the master prompt below.
+5. Ask Stitch to generate 4 current MVP screens first:
    - Recipes List
    - Recipe Detail
    - Request Screen
    - Settings
-7. Run only 2 follow-up prompts after the first output:
+6. Run only 2 follow-up prompts after the first output:
    - `Prompt A: reading comfort`
    - `Prompt B: current MVP parity`
-8. Export the strongest result to Figma.
+7. Export the strongest result to Figma.
 
 ### Master prompt to paste first
 ```text
@@ -57,15 +44,14 @@ Core product promise:
 - feel trustworthy, calm, intimate, and premium
 
 Visual direction:
-- Warm Paper Notebook
-- compact native list density
-- Public Sans style sans-serif typography
-- warm paper backgrounds
-- orange primary actions
-- green secondary functional accents
+- modern heritage
+- warm paper-like backgrounds
+- text-first notebook zoning
+- clean sans-serif UI for both Latin and Cyrillic
+- restrained corner radii
 - low-chrome grouped sections
-- soft paper-like panels in long-form reading areas
-- subtle graphic character without becoming decorative
+- soft depth only where necessary
+- family warmth without kitsch
 
 Avoid:
 - generic productivity SaaS
@@ -78,24 +64,16 @@ Avoid:
 - image-led hero sections
 - large pill buttons
 - decorative serif typography in Russian
-- the old Stitch "round-full everywhere" look
-- giant rounded search bars
-- overuse of whitespace in dense text screens
 
 Use this color direction:
-- background: warm paper `#FCF9F4`
-- surface: white `#FFFFFF`
-- soft surface: `#F6F3EE`
-- divider / outline: `#E5E1D8`
-- text: charcoal `#1C1C19`
-- primary CTA and active nav: orange `#FF9900`
-- dark orange emphasis: `#8A5100`
-- secondary functional accent: green `#228B22` or `#006E0C`
-- red only as a small supporting accent
+- background: warm off-white / paper beige
+- surface: white or warm light surface
+- text: charcoal / dark gray
+- primary CTA: coral or terracotta
+- success: soft olive-green
 - contacts: stable color-coded chips
 
 Use this typography direction:
-- Public Sans or a very similar neo-grotesk sans-serif
 - clean sans-serif for UI and body
 - compact label style for metadata and chips
 - no serif in Russian UI
@@ -103,7 +81,6 @@ Use this typography direction:
 
 UI copy must stay in Russian.
 Assume the core app works with no photos at all.
-Stay close to the accepted style shown in the current list and recipe detail references.
 
 For this first pass, design only these 4 iPhone MVP screens:
 
@@ -116,10 +93,10 @@ For this first pass, design only these 4 iPhone MVP screens:
 
 2. Recipe Detail
 - navigation title is the recipe title
-- metadata row with author only
-- one large readable free-form recipe text area
+- metadata row with author chip and date
+- highly readable recipe text card
 - secondary CTA: "Попросить уточнить"
-- personal note area as the second text field in the same block
+- personal note section: empty, existing, and edit states
 
 3. Request Screen
 - navigation title: "Запросить рецепт"
@@ -158,8 +135,6 @@ Behavioral expectations:
 - prioritize text area over decorative spacing
 - use minimal but friendly corner radii
 - use compact spacing and modern notebook zoning instead of showcase cards
-- dense list screens may use thin dividers
-- dense list rows should feel near-edge-to-edge and practical
 
 Make the result feel specific, premium, warm, and memorable, but still realistic for a SwiftUI iPhone MVP.
 ```
@@ -183,11 +158,7 @@ Now tighten the design to stay closer to the current iPhone MVP information arch
 Paste this extra prompt:
 
 ```text
-Push the visual identity further toward "Warm Paper Notebook".
-Keep the compact native density from the accepted recipe list.
-Use the orange/green/warm-paper palette more confidently.
-Keep typography sans-serif only and close to Public Sans.
-Add subtle graphic character through navigation accents, labels, and tonal panels, not through oversized cards or decorative typography.
+Push the visual identity further toward "modern heritage editorial". Make it feel more premium and memorable, less like a default app template. Keep usability high. Increase typographic character, warmth, and emotional clarity without becoming decorative or old-fashioned.
 ```
 
 ### What not to do yet
@@ -252,71 +223,6 @@ Geometry correction:
 - keep horizontal padding tight but breathable
 - reduce vertical whitespace
 - prioritize text density and readability on a small phone screen
-```
-
-### Hard layout correction
-Если Stitch всё равно рисует card gallery, pill shapes, FAB и слишком много пустого воздуха, вставь это:
-
-```text
-Hard layout correction.
-
-This is not a card-based app.
-This is not a showcase UI.
-This is not a bento layout.
-This is not a floating-dashboard mobile design.
-
-Rebuild the screen as a dense text-first notebook list.
-
-Strict rules:
-- remove large rounded cards
-- remove floating action buttons
-- remove oversized pill buttons
-- remove oversized rounded search bars
-- remove decorative empty whitespace
-- remove showcase-style content blocks
-- remove any layout that wastes vertical space
-
-Use this structure instead:
-- edge-to-edge or near-edge-to-edge vertical list
-- full-width list rows
-- thin dividers or very light section separation
-- compact metadata under titles
-- compact top bar
-- compact native tab bar
-- one clear primary action, but not as a giant floating shape
-
-Geometry:
-- row/group radius: 0-6 px maximum
-- inputs: 6-8 px maximum
-- buttons: 6-8 px maximum
-- many rows can be completely square with only subtle softening
-- no shadows unless extremely subtle
-
-Density:
-- reduce vertical padding
-- reduce gaps between sections
-- make rows tighter
-- maximize how many meaningful text items fit on screen
-- preserve readability while increasing information density
-
-Typography:
-- sans-serif only
-- large readable titles
-- compact metadata
-- text wraps naturally
-- no serif
-
-Reference behavior:
-- think modern notes app, reading app, or reference manual
-- not a marketing landing page
-- not a premium card carousel
-
-Accessibility:
-- still support larger text sizes
-- when text grows, rows grow vertically
-- do not compensate by adding huge decorative containers
-
-Re-render the screen with a compact list-first layout.
 ```
 
 ## Цель
@@ -395,9 +301,7 @@ FamilyRecipes helps families turn "roughly how we cook it" into "we can reliably
 
 ### Product roles
 - Master: uses native app, requests recipes, reviews them, cooks from them
-- Donor: uses zero-install mobile web link, submits two text fields:
-  - main recipe text
-  - personal donor comment / context
+- Donor: uses zero-install mobile web link, submits recipe in free form
 
 ## Текущие продуктовые и визуальные референсы
 ### Product docs
@@ -429,7 +333,7 @@ FamilyRecipes helps families turn "roughly how we cook it" into "we can reliably
 
 ### Core donor mobile web screens
 1. Request landing with short onboarding
-2. Submission form with two text inputs: main recipe text + donor personal comment
+2. Submission form
 3. Success
 4. Not found
 5. Expired
@@ -470,7 +374,7 @@ FamilyRecipes helps families turn "roughly how we cook it" into "we can reliably
 ```text
 Design an iPhone app screen for FamilyRecipes called "Рецепты".
 
-This is a warm paper, text-first, compact recipe notebook app, not a marketplace.
+This is a warm, editorial, modern-heritage recipe archive app, not a marketplace.
 UI copy must stay in Russian.
 Assume the core app uses no photos and is text-first.
 
@@ -481,7 +385,7 @@ Screen goals:
 - include an add button for creating your own recipe
 
 Required structure:
-- large navigation title: "Рецепты"
+- small navigation title: "Рецепты"
 - top-right plus button for creating a recipe
 - main area supports these states: loading, empty, error, data
 - in the data state, show recipe rows/cards with:
@@ -496,7 +400,6 @@ Required structure:
   - "Ещё"
 
 Visual direction:
-- warm light theme
 - compact but breathable spacing, strong readability
 - refined list rows or low-chrome grouped sections instead of oversized cards
 - calm editorial hierarchy, not default productivity UI
@@ -514,43 +417,36 @@ Behavioral expectations:
 Design an iPhone app screen for FamilyRecipes called recipe detail.
 
 UI copy must stay in Russian.
-This screen is for comfortable long-form reading of a family recipe inside the accepted Warm Paper Notebook style.
+This screen is for comfortable long-form reading of a family recipe.
 Assume no photography or decorative image blocks.
 
 Required structure:
 - navigation title is the recipe title
 - back navigation only; do not add an unnecessary overflow menu by default
-- compact author row near the top
-- no date on this screen
-- the original recipe is one free-form text field written by the donor in a single submission
-- do not split it into ingredients, steps, time, servings, stats, or any structured recipe layout
-- show the donor text as one large readable text area
-- below it, add a very small and quiet secondary action:
+- metadata row near the top:
+  - author chip if author exists
+  - date on the opposite side
+- main recipe text inside a highly readable card or text surface
+- secondary full-width CTA:
   - "Попросить уточнить"
   - only visible when author exists
-  - small text button or subtle inline action, not a prominent full-width button
-- below that, create a near-seamless transition into the personal note area
-- the personal note should feel like the second text field in the same working block
-- personal note area:
+  - clearly secondary, not louder than the recipe itself
+- personal note section:
+  - heading "Моя заметка"
   - empty state with "Добавить заметку"
-  - existing note state with readable note text
+  - existing note state with readable note card and "Редактировать"
   - edit state with text editor plus "Сохранить" and "Отмена"
 
 Visual direction:
 - prioritize reading comfort and text rhythm
 - warm surfaces, subtle borders, almost no decorative depth
-- minimal separation between the donor recipe and the personal note
+- strong spacing between metadata, recipe card, clarification CTA, and notes
 - private, lightweight feeling for notes
 - text-first notebook feeling with restrained radii and minimal chrome
-- this should feel like one continuous reading-and-annotation surface, not stacked modules
 
 Behavioral expectations:
 - clarification CTA should feel like it prefills a request to the recipe author
 - note controls should feel local and lightweight, not like heavy document editing
-- the screen should feel like two text fields in one semantic block:
-  - donor recipe
-  - my personal note
-- the donor recipe remains fully free-form text
 ```
 
 ### 3. Request Screen
@@ -558,7 +454,7 @@ Behavioral expectations:
 Design an iPhone app screen for FamilyRecipes called "Запросить рецепт".
 
 UI copy must stay in Russian.
-This is the core action screen for requesting a recipe from a family member in the accepted Warm Paper Notebook style.
+This is the core action screen for requesting a recipe from a family member.
 Assume no decorative images and no oversized floating cards.
 
 Required structure:
@@ -616,7 +512,7 @@ Behavioral expectations:
 Design an iPhone app screen for FamilyRecipes called settings.
 
 UI copy must stay in Russian.
-Keep the screen simple, native-feeling, list-based, and aligned with the accepted Warm Paper Notebook style.
+Keep the screen simple, native-feeling, and list-based.
 Assume a text-first notebook product, not a dashboard.
 
 Required structure:
@@ -680,7 +576,7 @@ This is not a recipe discovery marketplace, not a social feed, and not a meal pl
 
 Primary users:
 1. The "Master" user has the native app. They request recipes from relatives, receive recipes, read them, cook from them, save personal notes, and ask follow-up clarifications.
-2. The "Donor" user does not install the app. They open a mobile web link from a messenger and submit two text fields: the main recipe text and a personal donor comment.
+2. The "Donor" user does not install the app. They open a mobile web link from a messenger and submit a recipe in free form.
 
 Core product promise:
 - preserve the original family voice
@@ -733,7 +629,7 @@ Design the following screens and components:
 2. login screen
 3. recipes empty state
 4. recipes list with author, date, and note indicator
-5. recipe detail with prominent title, author only, one large free-form original recipe text area, a very small clarification action, and a near-seamless personal note area
+5. recipe detail with prominent title, author chip, date, original recipe text, personal note module, and a secondary CTA to ask for clarification
 6. create own recipe modal
 7. request form with recipient field, dish field, color-coded suggested contact chips, and inline request history below
 8. request success state with clear next actions: share link, copy link, view history, new request
@@ -741,7 +637,7 @@ Design the following screens and components:
 10. contacts list
 11. create/edit contact screen
 12. donor mobile web request landing with one-glance onboarding
-13. donor submission form with `recipe_text` + `donor_comment`
+13. donor submission form
 14. donor success state
 15. donor error states: not found, expired, already fulfilled
 

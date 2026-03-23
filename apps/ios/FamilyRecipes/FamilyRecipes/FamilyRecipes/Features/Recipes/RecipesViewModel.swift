@@ -34,4 +34,9 @@ final class RecipesViewModel {
             errorMessage = error.localizedDescription
         }
     }
+
+    func updateCard(_ updated: FamilyRecipeCard) {
+        guard let idx = cards.firstIndex(where: { $0.id == updated.id }) else { return }
+        cards[idx] = updated
+    }
 }

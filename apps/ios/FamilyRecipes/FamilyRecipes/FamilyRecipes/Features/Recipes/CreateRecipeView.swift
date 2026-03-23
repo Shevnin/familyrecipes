@@ -7,7 +7,10 @@ struct CreateRecipeView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    var contentKind: String = "recipe"
     var onSaved: () -> Void
+
+    private var isTechnique: Bool { contentKind == "technique" }
 
     private var isValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
@@ -22,12 +25,15 @@ struct CreateRecipeView: View {
                         Text("Название")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.WP.textSecondary)
-                        TextField("Борщ, пирожки…", text: $title)
-                            .wpInput()
+                        TextField(
+                            isTechnique ? "Жарка лука, прозрачный бульон…" : "Борщ, пирожки…",
+                            text: $title
+                        )
+                        .wpInput()
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Рецепт")
+                        Text(isTechnique ? "Описание техники" : "Рецепт")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.WP.textSecondary)
                         TextEditor(text: $originalText)
@@ -51,7 +57,7 @@ struct CreateRecipeView: View {
                 .padding(20)
             }
             .wpBackground()
-            .navigationTitle("Новый рецепт")
+            .navigationTitle(isTechnique ? "Новая техника" : "Новый рецепт")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -80,7 +86,8 @@ struct CreateRecipeView: View {
         do {
             try await EdgeFunctionsClient.shared.createRecipe(
                 title: title.trimmingCharacters(in: .whitespaces),
-                originalText: originalText.trimmingCharacters(in: .whitespaces)
+                originalText: originalText.trimmingCharacters(in: .whitespaces),
+                contentKind: contentKind
             )
             onSaved()
             dismiss()

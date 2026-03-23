@@ -4,11 +4,13 @@ struct CreateRequestInput: Encodable {
     let recipientName: String
     let dishName: String
     var parentRecipeId: String?
+    var contentKind: String
 
     enum CodingKeys: String, CodingKey {
         case recipientName = "recipient_name"
         case dishName = "dish_name"
         case parentRecipeId = "parent_recipe_id"
+        case contentKind = "content_kind"
     }
 }
 

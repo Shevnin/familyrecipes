@@ -32,7 +32,7 @@ struct CreateRequestView: View {
                 .padding(.bottom, 24)
             }
             .wpBackground()
-            .navigationTitle("Запросить рецепт")
+            .navigationTitle(viewModel.contentKind == "technique" ? "Запросить технику" : "Запросить рецепт")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $viewModel.showShareSheet) {
                 if let text = viewModel.activeShareText {
@@ -50,6 +50,7 @@ struct CreateRequestView: View {
                     viewModel.recipientName = draft.recipient
                     viewModel.dishName = draft.dish
                     viewModel.parentRecipeId = draft.parentRecipeId
+                    viewModel.contentKind = draft.contentKind
                     viewModel.result = nil
                 }
             }
@@ -60,6 +61,20 @@ struct CreateRequestView: View {
 
     private var formSection: some View {
         VStack(spacing: 16) {
+            // Content kind picker
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Тип")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.WP.textSecondary)
+
+                Picker("", selection: $viewModel.contentKind) {
+                    Text("Рецепт").tag("recipe")
+                    Text("Техника").tag("technique")
+                }
+                .pickerStyle(.segmented)
+                .disabled(viewModel.result != nil)
+            }
+
             // Recipient field with dropdown
             VStack(alignment: .leading, spacing: 6) {
                 Text("Кому отправить?")
@@ -69,14 +84,19 @@ struct CreateRequestView: View {
                 recipientField
             }
 
-            // Recipe name
+            // Dish/technique name
             VStack(alignment: .leading, spacing: 6) {
-                Text("Название рецепта")
+                Text(viewModel.contentKind == "technique" ? "Название техники" : "Название рецепта")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Color.WP.textSecondary)
-                TextField("Борщ, пирожки с мясом...", text: $viewModel.dishName)
-                    .wpInput()
-                    .disabled(viewModel.result != nil)
+                TextField(
+                    viewModel.contentKind == "technique"
+                        ? "Как жарить лук, бульон, зажарка..."
+                        : "Борщ, пирожки с мясом...",
+                    text: $viewModel.dishName
+                )
+                .wpInput()
+                .disabled(viewModel.result != nil)
             }
 
             // Error
@@ -230,7 +250,7 @@ struct CreateRequestView: View {
             .background(Color.WP.surface, in: RoundedRectangle(cornerRadius: DS.rowRadius, style: .continuous))
 
             // Explanation
-            Text("Вставьте ссылку в мессенджер и отправьте адресату. У него будет форма чтобы заполнить. Ваш список рецептов пополнился этим запросом.")
+            Text("Вставьте ссылку в мессенджер и отправьте адресату. У него будет форма чтобы заполнить. Ваш список пополнился этим запросом.")
                 .font(.caption)
                 .foregroundStyle(Color.WP.textSecondary)
                 .lineSpacing(3)

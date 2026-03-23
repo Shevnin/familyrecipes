@@ -94,6 +94,21 @@
   - `BE-IMPL-03`
   - `IOS-09`
   - `ANDROID-09`
+- [done] Mastery loop package `REPEAT-LOOP-01` (iOS + backend, 2026-03-23):
+  - migration `00008_mastery_loop.sql`: table `recipe_attempts`, RLS, updated VIEW `family_recipe_cards` with mastery read-model
+  - Edge Function `log-cook-attempt`: auth, household validation, append-only insert, mastery response
+  - `IOS-10` MasteryBlock on detail screen: cook_count, mastery_status badge, latest post-cook note, CTA
+  - `IOS-11` PostCookSheet: result picker (failed/partial/success) + optional note, saves to backend
+  - `IOS-12` Contextual clarification CTA after failed/partial attempt (reuses existing clarification flow)
+  - mastery badge in recipe list row (subtle icon for received cards with attempts)
+- [done] `TECHNIQUES-01` content_kind package (iOS + backend + donor web, 2026-03-23):
+  - migration `00009_content_kind.sql`: `content_kind` column on `recipes` + `recipe_requests` (CHECK 'recipe'|'technique', DEFAULT 'recipe'), updated VIEW + RPC
+  - Edge Functions: `create-request` accepts `content_kind`, `get-request-meta` returns it, `get-edit-meta` returns it from recipe record
+  - donor web form: copy adapts to `content_kind` (labels, button, success/fulfilled states, about block)
+  - iOS: `FamilyRecipeCard.contentKind`, segmented control (Рецепты / Техники) in RecipesView, type picker in CreateRequestView, `CreateRecipeView(contentKind:)`, adapted copy in detail/mastery/postcook
+  - clarification flow preserves `content_kind` through `RequestDraft`
+- [todo] Android mastery loop parity (`ANDROID-MASTERY-01`) — backend ready, iOS is reference
+- [todo] Android techniques parity (`ANDROID-TECHNIQUES-01`) — after Android main parity
 - [todo] Backend contacts storage (`BE-SPEC-02` -> `BE-IMPL-02`) после donor loop upgrade, если по-прежнему нужно.
 
 Инициативы:
@@ -104,5 +119,6 @@
 - Donor conversion improvements в zero-install web flow.
 - Donor post-submit correction flow: limited-time edit after successful submit, without login.
 - Donor reply v2: основной текст рецепта + отдельный личный комментарий донора.
+- Mastery loop: повторные попытки, короткая post-cook note, progress toward `замастерил`, contextual clarification.
 - Читаемое recipe detail experience с акцентом на оригинальный текст и личную заметку.
 - Push-уведомления о выполненном запросе.

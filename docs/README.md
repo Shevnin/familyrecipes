@@ -25,6 +25,7 @@
 
 ## Структура
 - `product_brief.md` — что за продукт, для кого, ключевая гипотеза.
+- `help_content.md` — каноничный source of truth для in-app help / about copy.
 - `current_state.md` — где остановились и с чего начинать новую сессию.
 - `workflow.md` — как ведём работу (роли, stage-gate, цикл).
 - `roadmap.md` — план релизов/фаз.

@@ -56,10 +56,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch recipe_story from the recipe record
+    // Fetch recipe_story and content_kind from the recipe record
     const { data: recipe } = await serviceClient
       .from("recipes")
-      .select("recipe_story")
+      .select("recipe_story, content_kind")
       .eq("id", sub.created_recipe_id)
       .single();
 
@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
         recipe_title: sub.recipe_title,
         original_text: sub.original_text,
         recipe_story: recipe?.recipe_story ?? null,
+        content_kind: recipe?.content_kind ?? "recipe",
         edit_expires_at: sub.edit_expires_at,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

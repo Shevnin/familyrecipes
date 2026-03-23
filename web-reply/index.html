@@ -242,6 +242,32 @@
       background: var(--accent);
       color: #fff;
     }
+
+    /* --- About block --- */
+    .about-block {
+      margin-top: 24px;
+      padding: 24px 20px;
+      background: #F5F1EB;
+      border-radius: var(--radius);
+    }
+    .about-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .about-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+    .about-text p {
+      margin-bottom: 10px;
+    }
+    .about-text p:last-child {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -277,8 +303,8 @@
   <div id="state-fulfilled" class="state">
     <div class="card error-card">
       <div class="error-icon">&#9989;</div>
-      <div class="error-title">Рецепт уже отправлен</div>
-      <div class="error-text">По этой ссылке рецепт уже был отправлен ранее.</div>
+      <div class="error-title" id="fulfilled-title">Рецепт уже отправлен</div>
+      <div class="error-text" id="fulfilled-text">По этой ссылке рецепт уже был отправлен ранее.</div>
     </div>
   </div>
 
@@ -315,16 +341,16 @@
           <input type="text" id="submitted_by_name" required placeholder="Как вас зовут?">
         </div>
         <div class="field">
-          <label for="recipe_title">Название рецепта</label>
+          <label for="recipe_title" id="label-recipe-title">Название рецепта</label>
           <input type="text" id="recipe_title" required>
         </div>
         <div class="field">
-          <label for="original_text">Рецепт</label>
+          <label for="original_text" id="label-original-text">Рецепт</label>
           <textarea id="original_text" required
             placeholder="Напишите рецепт в свободной форме: ингредиенты, шаги, советы..."></textarea>
         </div>
         <div class="field">
-          <label for="recipe_story">История рецепта</label>
+          <label for="recipe_story" id="label-recipe-story">История рецепта</label>
           <textarea id="recipe_story"
             placeholder="Откуда этот рецепт? Кто его готовил, когда и по какому поводу..."
             style="min-height: 100px;"></textarea>
@@ -333,13 +359,22 @@
         <div class="form-error" id="form-error"></div>
       </form>
     </div>
+
+    <div class="about-block" id="about-block">
+      <div class="about-title">Зачем это</div>
+      <div class="about-text">
+        <p>FamilyRecipes помогает сохранять рецепты и кулинарные техники от близких людей — вместе с историей: откуда рецепт взялся, кто научил этому приёму и почему он стал особенным.</p>
+        <p>Вам не нужно устанавливать приложение или заполнять сложную форму — достаточно написать рецепт или описать технику своими словами, как вы обычно рассказали бы в сообщении.</p>
+        <p>Если захотите, добавьте историю или контекст. Так у того, кто попросил, останется не только инструкция, но и память о человеке и моменте.</p>
+      </div>
+    </div>
   </div>
 
   <!-- Success (after first submit) -->
   <div id="state-success" class="state">
     <div class="card success-card">
       <div class="success-icon">&#10003;</div>
-      <div class="success-title">Рецепт отправлен!</div>
+      <div class="success-title" id="success-title">Рецепт отправлен!</div>
       <div class="success-text" id="success-text">Спасибо! Рецепт уже доступен в приложении.<br>В течение 72 часов вы можете внести правки.</div>
       <button class="edit-cta-btn" id="edit-cta-btn" style="display:none;">Исправить рецепт</button>
     </div>
@@ -350,7 +385,7 @@
     <div class="card success-card">
       <div class="success-icon">&#10003;</div>
       <div class="success-title">Изменения сохранены</div>
-      <div class="success-text">Обновлённый рецепт уже доступен в приложении.</div>
+      <div class="success-text" id="edit-success-text">Обновлённый рецепт уже доступен в приложении.</div>
     </div>
   </div>
 </div>
@@ -366,6 +401,43 @@
   var CAPTCHA_TOKEN = null;
   var params = new URLSearchParams(location.search);
   var API_BASE = params.get('api') || DEFAULT_API;
+
+  // Current content kind — set from server metadata
+  var currentContentKind = 'recipe';
+
+  // Apply content_kind-aware copy to form labels and button
+  function applyContentKind(kind, isEdit) {
+    var isTechnique = kind === 'technique';
+    var el;
+
+    el = document.getElementById('label-recipe-title');
+    if (el) el.textContent = isTechnique ? 'Название техники' : 'Название рецепта';
+
+    el = document.getElementById('label-original-text');
+    if (el) el.textContent = isTechnique ? 'Описание техники' : 'Рецепт';
+
+    el = document.getElementById('original_text');
+    if (el) el.placeholder = isTechnique
+      ? 'Опишите технику в свободной форме: шаги, советы, на что обратить внимание...'
+      : 'Напишите рецепт в свободной форме: ингредиенты, шаги, советы...';
+
+    el = document.getElementById('label-recipe-story');
+    if (el) el.textContent = isTechnique ? 'История техники' : 'История рецепта';
+
+    el = document.getElementById('recipe_story');
+    if (el) el.placeholder = isTechnique
+      ? 'Откуда эта техника? Кто научил, когда и в каком контексте...'
+      : 'Откуда этот рецепт? Кто его готовил, когда и по какому поводу...';
+
+    if (!isEdit) {
+      el = document.getElementById('submit-btn');
+      if (el) el.textContent = isTechnique ? 'Отправить технику' : 'Отправить рецепт';
+    }
+  }
+
+  function getSubmitBtnText() {
+    return currentContentKind === 'technique' ? 'Отправить технику' : 'Отправить рецепт';
+  }
 
   // --- Determine mode: submit (token) or edit (edit_token) ---
   function getToken() {
@@ -416,9 +488,13 @@
       if (data.error === 'edit_not_found') { showState('edit-not-found'); return; }
       if (data.error === 'edit_window_expired') { showState('edit-expired'); return; }
 
-      // Show edit form with prefilled values
+      // Show edit form with prefilled values — hide about block in edit mode
+      currentContentKind = data.content_kind || 'recipe';
+      applyContentKind(currentContentKind, true);
+      document.getElementById('about-block').style.display = 'none';
       document.getElementById('edit-badge').style.display = 'inline-block';
-      document.getElementById('form-context').textContent = 'Исправьте рецепт, если нужно:';
+      document.getElementById('form-context').textContent =
+        currentContentKind === 'technique' ? 'Исправьте технику, если нужно:' : 'Исправьте рецепт, если нужно:';
       document.getElementById('form-dish').textContent = data.recipe_title;
       document.getElementById('submitted_by_name').value = data.submitted_by_name || '';
       document.getElementById('recipe_title').value = data.recipe_title || '';
@@ -471,6 +547,10 @@
       })
       .then(function(result) {
         if (result.status === 200 && result.data.success) {
+          var esEl = document.getElementById('edit-success-text');
+          if (esEl) esEl.textContent = currentContentKind === 'technique'
+            ? 'Обновлённая техника уже доступна в приложении.'
+            : 'Обновлённый рецепт уже доступен в приложении.';
           showState('edit-success');
           return;
         }
@@ -521,6 +601,13 @@
       return;
     }
     if (data.status === 'fulfilled') {
+      var isTech = (data.content_kind === 'technique');
+      var ft = document.getElementById('fulfilled-title');
+      var ftx = document.getElementById('fulfilled-text');
+      if (ft) ft.textContent = isTech ? 'Техника уже отправлена' : 'Рецепт уже отправлен';
+      if (ftx) ftx.textContent = isTech
+        ? 'По этой ссылке техника уже была отправлена ранее.'
+        : 'По этой ссылке рецепт уже был отправлен ранее.';
       showState('fulfilled');
       return;
     }
@@ -529,11 +616,12 @@
       return;
     }
 
-    // Show form
-    document.getElementById('form-context').textContent =
-      data.recipient_name + ', вас просят поделиться рецептом:';
+    // Show form — adapt copy to content_kind
+    currentContentKind = data.content_kind || 'recipe';
+    applyContentKind(currentContentKind, false);
+    document.getElementById('form-context').textContent = data.recipient_name +
+      (currentContentKind === 'technique' ? ', вас просят поделиться техникой:' : ', вас просят поделиться рецептом:');
     document.getElementById('form-dish').textContent = data.dish_name;
-    document.getElementById('submitted_by_name').value = data.recipient_name;
     document.getElementById('recipe_title').value = data.dish_name;
     showState('form');
   })
@@ -568,7 +656,7 @@
     if (!payload.submitted_by_name || !payload.recipe_title || !payload.original_text) {
       showError('Пожалуйста, заполните все поля.');
       btn.disabled = false;
-      btn.textContent = 'Отправить рецепт';
+      btn.textContent = getSubmitBtnText();
       return;
     }
 
@@ -584,11 +672,20 @@
     })
     .then(function(result) {
       if (result.status === 201) {
+        // Adapt success state copy to content_kind
+        var isTechSuccess = currentContentKind === 'technique';
+        var stEl = document.getElementById('success-title');
+        var stxEl = document.getElementById('success-text');
+        if (stEl) stEl.textContent = isTechSuccess ? 'Техника отправлена!' : 'Рецепт отправлен!';
+        if (stxEl) stxEl.innerHTML = isTechSuccess
+          ? 'Спасибо! Техника уже доступна в приложении.<br>В течение 72 часов вы можете внести правки.'
+          : 'Спасибо! Рецепт уже доступен в приложении.<br>В течение 72 часов вы можете внести правки.';
         // Store edit_token for CTA button
         if (result.data.edit_token) {
           pendingEditToken = result.data.edit_token;
           var ctaBtn = document.getElementById('edit-cta-btn');
           ctaBtn.style.display = 'inline-block';
+          ctaBtn.textContent = isTechSuccess ? 'Исправить технику' : 'Исправить рецепт';
           ctaBtn.addEventListener('click', function() {
             var editUrl = location.origin + location.pathname + '?edit_token=' + pendingEditToken;
             location.href = editUrl;
@@ -612,17 +709,17 @@
       if (result.data.error === 'captcha_required') {
         showError('Проверка безопасности не пройдена. Обновите страницу.');
         btn.disabled = false;
-        btn.textContent = 'Отправить рецепт';
+        btn.textContent = getSubmitBtnText();
         return;
       }
       showError('Не удалось отправить. Попробуйте ещё раз.');
       btn.disabled = false;
-      btn.textContent = 'Отправить рецепт';
+      btn.textContent = getSubmitBtnText();
     })
     .catch(function() {
       showError('Ошибка сети. Проверьте подключение и попробуйте снова.');
       btn.disabled = false;
-      btn.textContent = 'Отправить рецепт';
+      btn.textContent = getSubmitBtnText();
     });
   });
 })();

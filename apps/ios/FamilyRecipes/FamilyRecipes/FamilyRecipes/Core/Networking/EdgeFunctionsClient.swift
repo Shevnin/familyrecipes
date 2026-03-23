@@ -85,7 +85,8 @@ struct EdgeFunctionsClient {
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
 
-        let url = "\(restURL)/family_recipe_cards?select=card_id,household_id,title,author_name,original_text,card_status,recipe_story,recipe_id,request_id,created_at&order=created_at.desc"
+        let fields = "card_id,household_id,title,author_name,original_text,card_status,recipe_story,recipe_id,request_id,created_at,content_kind,cook_count,mastery_status,latest_attempt_result,latest_attempt_note,latest_cooked_at"
+        let url = "\(restURL)/family_recipe_cards?select=\(fields)&order=created_at.desc"
         return try await HTTPClient.shared.request(
             url: url,
             method: .get,
@@ -93,6 +94,71 @@ struct EdgeFunctionsClient {
                 "Authorization": "Bearer \(token)",
                 "apikey": AppConfig.supabaseAnonKey
             ]
+        )
+    }
+
+    // MARK: - Log Cook Attempt (Mastery Loop)
+
+    struct CookAttemptResponse: Decodable {
+        let attemptId: String
+        let cookCount: Int
+        let masteryStatus: String
+        let latestAttemptResult: String?
+        let latestAttemptNote: String?
+        let latestCookedAt: String?
+
+        enum CodingKeys: String, CodingKey {
+            case attemptId = "attempt_id"
+            case cookCount = "cook_count"
+            case masteryStatus = "mastery_status"
+            case latestAttemptResult = "latest_attempt_result"
+            case latestAttemptNote = "latest_attempt_note"
+            case latestCookedAt = "latest_cooked_at"
+        }
+    }
+
+    func logCookAttempt(recipeId: String, result: CookResult, noteText: String?) async throws -> CookAttemptResponse {
+        if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+        }
+
+        do {
+            return try await performLogCookAttempt(recipeId: recipeId, result: result, noteText: noteText)
+        } catch NetworkError.httpError(let code, _) where code == 401 {
+            _ = try await SupabaseAuthClient.shared.refreshSession()
+            return try await performLogCookAttempt(recipeId: recipeId, result: result, noteText: noteText)
+        }
+    }
+
+    private func performLogCookAttempt(recipeId: String, result: CookResult, noteText: String?) async throws -> CookAttemptResponse {
+        guard let token = await SupabaseAuthClient.shared.accessToken else {
+            throw NetworkError.httpError(statusCode: 401, body: Data())
+        }
+
+        struct AttemptInput: Encodable {
+            let recipeId: String
+            let result: String
+            let noteText: String?
+            enum CodingKeys: String, CodingKey {
+                case recipeId = "recipe_id"
+                case result
+                case noteText = "note_text"
+            }
+        }
+
+        let url = "\(functionsURL)/log-cook-attempt"
+        return try await HTTPClient.shared.request(
+            url: url,
+            method: .post,
+            headers: [
+                "Authorization": "Bearer \(token)",
+                "apikey": AppConfig.supabaseAnonKey
+            ],
+            body: AttemptInput(
+                recipeId: recipeId,
+                result: result.rawValue,
+                noteText: noteText.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
+            )
         )
     }
 
@@ -148,20 +214,20 @@ struct EdgeFunctionsClient {
 
     // MARK: - Create Recipe
 
-    func createRecipe(title: String, originalText: String) async throws {
+    func createRecipe(title: String, originalText: String, contentKind: String = "recipe") async throws {
         if let token = await SupabaseAuthClient.shared.accessToken, Self.isTokenExpired(token) {
             _ = try await SupabaseAuthClient.shared.refreshSession()
         }
 
         do {
-            try await performCreateRecipe(title: title, originalText: originalText)
+            try await performCreateRecipe(title: title, originalText: originalText, contentKind: contentKind)
         } catch NetworkError.httpError(let code, _) where code == 401 {
             _ = try await SupabaseAuthClient.shared.refreshSession()
-            try await performCreateRecipe(title: title, originalText: originalText)
+            try await performCreateRecipe(title: title, originalText: originalText, contentKind: contentKind)
         }
     }
 
-    private func performCreateRecipe(title: String, originalText: String) async throws {
+    private func performCreateRecipe(title: String, originalText: String, contentKind: String) async throws {
         guard let token = await SupabaseAuthClient.shared.accessToken else {
             throw NetworkError.httpError(statusCode: 401, body: Data())
         }
@@ -192,11 +258,13 @@ struct EdgeFunctionsClient {
             let title: String
             let originalText: String
             let authorName: String
+            let contentKind: String
             enum CodingKeys: String, CodingKey {
                 case householdId = "household_id"
                 case title
                 case originalText = "original_text"
                 case authorName = "author_name"
+                case contentKind = "content_kind"
             }
         }
 
@@ -208,7 +276,8 @@ struct EdgeFunctionsClient {
                 householdId: householdId,
                 title: title,
                 originalText: originalText,
-                authorName: "Я"
+                authorName: "Я",
+                contentKind: contentKind
             )
         )
     }

@@ -63,6 +63,34 @@
 4. Codex ревьюит обновленные docs и синхронизирует roadmap/backlog/decisions.
 5. Повторяем цикл.
 
+## Специальный протокол для in-app Help
+
+- Каноничный source of truth для help-контента: `docs/help_content.md`
+- Этот файл описывает **смысл и copy** help screen, а не только UI-структуру.
+
+### Если Owner меняет смысл help-контента
+1. Owner обсуждает новую framing / copy с Codex.
+2. Codex обновляет `docs/help_content.md`.
+3. Если изменился product meaning, Codex синхронизирует:
+   - `docs/product_brief.md`
+   - `docs/backlog.md`
+   - `docs/decisions.md`
+   - `docs/current_state.md`
+4. Owner передаёт Claude задачу на sync help screen в приложении.
+5. Claude обновляет app-side help data и UI.
+6. Claude фиксирует sync в `docs/sessions/` и `docs/current_state.md`.
+7. Codex проверяет, что app и `docs/help_content.md` не расходятся.
+
+### Обязательное правило для Claude
+- Не хардкодить help copy по нескольким view.
+- Help-контент в приложении должен жить в одном app-side источнике данных и рендериться из него.
+- Если Claude меняет help copy в app code, но видит, что `docs/help_content.md` отстаёт, он должен обновить docs или явно отметить drift в session note.
+
+### Когда help-сессия считается завершённой
+- `docs/help_content.md` актуален.
+- App help screen соответствует этому файлу.
+- В `docs/current_state.md` есть запись, если help-контент или процесс были существенно изменены.
+
 ## Правила завершения любой сессии
 
 - Есть запись в `docs/sessions/` с тем, что сделано.
@@ -81,6 +109,7 @@
 - Backlog: `docs/backlog.md`
 - Журнал решений: `docs/decisions.md`
 - Backend runbook: `docs/backend_setup_supabase.md`
+- Help source of truth: `docs/help_content.md`
 - Активные протоколы сессий: `docs/sessions/`
 - История сессий и старые материалы: `docs/archive/`
 - Шаблоны: `docs/templates/`

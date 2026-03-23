@@ -6,6 +6,7 @@ final class CreateRequestViewModel {
     var recipientName = ""
     var dishName = ""
     var parentRecipeId: String?
+    var contentKind = "recipe"
     var isLoading = false
     var errorMessage: String?
     var result: CreateRequestResponse?
@@ -51,7 +52,8 @@ final class CreateRequestViewModel {
         let input = CreateRequestInput(
             recipientName: recipientName.trimmingCharacters(in: .whitespaces),
             dishName: dishName.trimmingCharacters(in: .whitespaces),
-            parentRecipeId: parentRecipeId
+            parentRecipeId: parentRecipeId,
+            contentKind: contentKind
         )
 
         do {
@@ -86,6 +88,7 @@ final class CreateRequestViewModel {
         recipientName = ""
         dishName = ""
         parentRecipeId = nil
+        contentKind = "recipe"
         result = nil
         errorMessage = nil
     }

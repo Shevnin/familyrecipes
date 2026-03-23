@@ -3,6 +3,13 @@
 Формат: одна строка на решение — **YYYY-MM-DD — решение**.
 Примечание: ранние записи содержат исторические пути и могут ссылаться на старую структуру docs.
 
+## 2026-03-23
+- 2026-03-23 — Техники вводятся через единый `content_kind` ('recipe' | 'technique') на существующих таблицах, без параллельной инфраструктуры. Таблицы `recipes` и `recipe_requests` расширены колонкой `content_kind DEFAULT 'recipe'`, VIEW `family_recipe_cards` возвращает её. RPC `submit_recipe_by_token` передаёт `content_kind` из request в recipe автоматически — Edge Function `submit-request` не изменена.
+- 2026-03-23 — Internal naming сохранено: таблица `recipes`, view `family_recipe_cards`, field `recipe_id`, `recipe_title`. Отличие рецепта от техники только через `content_kind`. Переименование инфраструктуры признано нецелесообразным для MVP.
+- 2026-03-23 — iOS UI: segmented control «Рецепты / Техники» в RecipesView фильтрует единый список карточек по `contentKind`. Отдельная корневая tab bar вкладка для техник отклонена.
+- 2026-03-23 — Mastery loop один для рецептов и техник: таблица `recipe_attempts`, Edge Function `log-cook-attempt`, `MasteryBlock`, `PostCookSheet` переиспользуются без дублирования. User-facing copy адаптируется («Готовил» / «Практиковал», «Отметить готовку» / «Отметить практику»).
+- 2026-03-23 — Donor web form адаптирует copy динамически на основе `content_kind`, возвращаемого `get-request-meta`. Отдельная страница для техник отклонена.
+
 ## 2026-02-15
 - 2026-02-15 — Работаем итеративно: прототип → тест флоу → дизайн → спека → код (Claude Code).
 - 2026-02-15 — Каждая итерация = 1 end-to-end user flow, проходимый в прототипе/приложении.
@@ -69,3 +76,14 @@
 - 2026-03-22 — Donor edit должен быть **time-limited** (стартовое окно: 72 часа), zero-install и без логина/регистрации.
 - 2026-03-22 — Через donor edit можно менять только donor-originated данные текущего ответа (`submitted_by_name`, `recipe_title`, `original_text`, `recipe_story`; позже также `donor_comment`), без превращения MVP в полноценный versioned editor.
 - 2026-03-22 — `DONOR-07` реализован и задеплоен: миграция `00007_donor_edit_token.sql`, edge functions `get-edit-meta` + `update-submitted-recipe`, web-reply edit mode `?edit_token=`, `edit_token` хранится как SHA-256 hash (как и request token), обновление recipe без дубля.
+
+## 2026-03-23
+- 2026-03-23 — Mastery loop оформляется как единый пакет `REPEAT-LOOP-01`, а не как набор разрозненных фич `REPEAT-01...04`; sequencing: после Android parity, donor conversion pack и donor reply v2.
+- 2026-03-23 — `mastery_status` — это отдельный слой прогресса рецепта (`получил`, `пробовал`, `почти получилось`, `замастерил`), который не подменяет текущий lifecycle status карточки (`pending`, `received`, `clarification`).
+- 2026-03-23 — `post-cook note` не заменяет существующую personal note; это отдельная сущность, привязанная к попытке готовки.
+- 2026-03-23 — Для mastery loop MVP выбираем backend-backed направление хранения попыток готовки; local-only реализация отклоняется как тупиковая для метрик и cross-device consistency.
+- 2026-03-23 — `REPEAT-LOOP-01` реализован: таблица `recipe_attempts` (append-only, per-user), Edge Function `log-cook-attempt`, VIEW `family_recipe_cards` расширен mastery read-model полями (`cook_count`, `mastery_status`, `latest_attempt_result`, `latest_attempt_note`, `latest_cooked_at`). iOS: MasteryBlock (IOS-10), PostCookSheet (IOS-11), contextual CTA после failed/partial (IOS-12).
+- 2026-03-23 — Mastery status вычисляется по последней попытке текущего пользователя: `failed`→`пробовал`, `partial`→`почти получилось`, `success`→`замастерил`, 0 попыток→`получил`.
+- 2026-03-23 — Для Android mastery loop оставлены parity notes; iOS + backend реализованы полностью в рамках сессии 2026-03-23.
+- 2026-03-23 — In-app Help screen рассматривается как продуктовый экран смысла, а не как технический FAQ; он должен объяснять связь между людьми, историю рецепта, расстояние/сепарацию и путь к мастерству.
+- 2026-03-23 — `docs/help_content.md` принят как каноничный source of truth для in-app help copy; app-side help данные должны быть централизованы в одном файле/модели, а не размазаны по view.
